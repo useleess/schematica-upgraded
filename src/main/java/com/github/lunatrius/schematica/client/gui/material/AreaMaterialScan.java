@@ -1,0 +1,68 @@
+package com.github.lunatrius.schematica.client.gui.material;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import net.minecraft.block.Block;
+import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import com.github.lunatrius.schematica.api.SchematicRegion;
+import com.github.lunatrius.schematica.client.selection.AreaBlockCounter;
+import com.github.lunatrius.schematica.reference.Reference;
+
+public final class AreaMaterialScan implements MaterialScanner {
+    private final AreaBlockCounter<MaterialCache.BuildItems> counter;
+    private final EntityPlayer player;
+    private final AreaBlockCounter.Reader<MaterialCache.BuildItems> reader;
+    private int logged;
+
+    public AreaMaterialScan(List<SchematicRegion> regions, WorldClient world, EntityPlayer player, boolean renderLayers) {
+        this.player = player;
+        counter = new AreaBlockCounter<>(regions, renderLayers ? com.github.lunatrius.schematica.client.world.RenderLayerSettings.RANGE : null);
+        reader = new AreaBlockCounter.Reader<MaterialCache.BuildItems>() {
+            @Override public boolean loaded(int x, int y, int z) {
+                return MaterialScan.verifiedChunk(world.getChunkProvider().getLoadedChunk(x >> 4, z >> 4), y);
+            }
+            @Override public MaterialCache.BuildItems read(int x, int y, int z) {
+                try {
+                    net.minecraft.util.math.BlockPos pos = new net.minecraft.util.math.BlockPos(x, y, z);
+                    net.minecraft.block.state.IBlockState state = world.getBlockState(pos);
+                    if (state.getBlock().isAir(state, world, pos)) return null;
+                    MaterialCache.BuildItems items = MaterialCache.INSTANCE.items(world, pos, state, player);
+                    if (items == null) throw new IllegalArgumentException("Block has no item representation");
+                    return items.isEmpty() ? null : items;
+                } catch (RuntimeException error) {
+                    if (logged++ < 3) Reference.logger.debug("Could not analyze selection block at {}, {}, {}", x, y, z, error);
+                    throw error;
+                }
+            }
+        };
+    }
+
+    @Override public void step() { counter.step(reader, 4096, System.nanoTime() + 4_000_000L); }
+    @Override public boolean done() { return counter.done(); }
+    @Override public int percent() { return counter.percent(); }
+    @Override public int skipped() { return counter.skipped(); }
+    @Override public int unverified() { return counter.unverified(); }
+
+    @Override public List<MaterialListModel.Entry<MaterialItemKey>> result() {
+        if (!done()) throw new IllegalStateException("Area analysis is incomplete");
+        Map<MaterialItemKey, Integer> totals = new java.util.LinkedHashMap<>();
+        for (Map.Entry<MaterialCache.BuildItems, Integer> entry : counter.counts().entrySet()) {
+            MaterialCache.BuildItems items = entry.getKey();
+            for (int i = 0; i < items.size(); i++) totals.merge(items.key(i), items.count(i) * entry.getValue(), Integer::sum);
+        }
+        List<MaterialListModel.Entry<MaterialItemKey>> result = new ArrayList<>();
+        for (Map.Entry<MaterialItemKey, Integer> entry : totals.entrySet()) {
+            ItemStack stack = entry.getKey().stack();
+            String registry = String.valueOf(net.minecraft.item.Item.REGISTRY.getNameForObject(stack.getItem()));
+            String name;
+            try { name = stack.getDisplayName(); }
+            catch (RuntimeException error) { name = registry; }
+            result.add(new MaterialListModel.Entry<>(entry.getKey(), name, registry, entry.getValue(), 0, 0, 0));
+        }
+        MaterialScan.updateAvailable(result, player);
+        return result;
+    }
+}

@@ -1,0 +1,9 @@
+# gui - config - render
+schematica.config.blockDelta=Block Delta
+schematica.config.blockDelta.tooltip=Delta-verdi brukt for markering (hvis du opplever z-kollisjoner, øk dette).
+
+# gui - config - printer
+schematica.config.placeDelay=Plasseringsforsinkelse
+schematica.config.placeDelay.tooltip=Forsinkelse mellom plasseringsforsøk (i ticks).
+schematica.config.timeout=Tidsavbrudd
+schematica.config.timeout.tooltip=Tidsavbrudd før nytt forsøk på å plassere blokker.

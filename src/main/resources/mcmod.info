@@ -1,0 +1,12 @@
+[{
+	"modid": "schematica_plus",
+	"name": "Schematica Plus",
+	"description": "Save and load schematics, preview multiple builds, rotate or mirror them, and paste or automatically place blocks. Litematica-style interface. 1.12.2 port.",
+	"version": "${version}",
+	"mcversion": "${mcversion}",
+	"authorList": ["HackerRouter", "Lunatrius"],
+	"credits": "HackerRouter (Schematica Plus maintainer), Lunatrius (original author), GTNH and upstream contributors",
+	"url": "https://github.com/HackerRouter/Schematica-Plus",
+	"logoFile": "assets/schematica/logo.png",
+	"useDependencyInformation": false
+}]

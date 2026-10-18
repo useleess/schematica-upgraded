@@ -1,0 +1,101 @@
+package com.github.lunatrius.schematica.network.transfer;
+
+import com.github.lunatrius.schematica.api.ISchematic;
+import com.github.lunatrius.schematica.reference.Constants;
+
+public class SchematicTransfer {
+
+    public enum State {
+
+        BEGIN_WAIT(true),
+        BEGIN,
+        CHUNK_WAIT(true),
+        CHUNK,
+        END_WAIT(true),
+        END;
+
+        private boolean waiting;
+
+        State() {}
+
+        State(boolean waiting) {
+            this.waiting = waiting;
+        }
+
+        public boolean isWaiting() {
+            return this.waiting;
+        }
+    }
+
+    public final ISchematic schematic;
+    public final String name;
+
+    public final int width;
+    public final int height;
+    public final int length;
+
+    public State state = State.BEGIN_WAIT;
+    public int timeout = 0;
+    public int retries = 0;
+    public volatile boolean cancelled;
+
+    /** The client can restore independent regions; their payload is sent after the chunks. */
+    public boolean regionSupport;
+    public byte[] regionPayload;
+    public int regionSent;
+
+    public int baseX = 0;
+    public int baseY = 0;
+    public int baseZ = 0;
+
+    public SchematicTransfer(final ISchematic schematic, String name) {
+        this.schematic = schematic;
+        this.name = name;
+
+        this.width = schematic.getWidth();
+        this.height = schematic.getHeight();
+        this.length = schematic.getLength();
+    }
+
+    public boolean acceptGeometrySupport(boolean supported) {
+        if (!supported && DownloadGeometry.of(this.schematic).requiresSupport()) this.cancelled = true;
+        return !this.cancelled;
+    }
+
+    /** Older Plus clients cannot restore independent (overlapping) regions; they get the update message. */
+    public boolean acceptRegionSupport(boolean supported) {
+        regionSupport = supported;
+        if (!supported && com.github.lunatrius.schematica.world.storage.SchematicCopies.independent(this.schematic)) this.cancelled = true;
+        return !this.cancelled;
+    }
+
+    public boolean confirmChunk(final int chunkX, final int chunkY, final int chunkZ) {
+        if (this.state == State.CHUNK && chunkX == this.baseX && chunkY == this.baseY && chunkZ == this.baseZ) {
+            setState(State.CHUNK_WAIT);
+            this.baseX += Constants.SchematicChunk.WIDTH;
+
+            if (this.baseX >= this.width) {
+                this.baseX = 0;
+                this.baseY += Constants.SchematicChunk.HEIGHT;
+
+                if (this.baseY >= this.height) {
+                    this.baseY = 0;
+                    this.baseZ += Constants.SchematicChunk.LENGTH;
+
+                    if (this.baseZ >= this.length) {
+                        setState(State.END_WAIT);
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public void setState(State state) {
+        if (this.state != state) this.retries = 0;
+        this.state = state;
+        this.timeout = 0;
+    }
+}

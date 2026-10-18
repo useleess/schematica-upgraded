@@ -1,0 +1,155 @@
+package com.github.lunatrius.schematica.handler;
+
+import java.io.File;
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.function.Consumer;
+
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.World;
+import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+
+import com.github.lunatrius.schematica.SchematicaPlus;
+import com.github.lunatrius.schematica.reference.Names;
+import com.github.lunatrius.schematica.reference.Reference;
+import com.github.lunatrius.schematica.task.TaskRegistry;
+import com.github.lunatrius.schematica.world.chunk.SchematicContainer;
+import com.github.lunatrius.schematica.world.schematic.SchematicFileSnapshot;
+import com.github.lunatrius.schematica.world.schematic.SchematicFormat;
+
+public class QueueTickHandler {
+    public static final QueueTickHandler INSTANCE = new QueueTickHandler();
+    private final Queue<Save> queue = new ArrayDeque<>();
+    private volatile boolean clientPending, serverPending;
+
+    private static final class Save {
+        final SchematicContainer container;
+        final TaskRegistry.Task task;
+
+        Save(SchematicContainer container) {
+            this.container = container;
+            task = TaskRegistry.INSTANCE.start(container.player.getUniqueID(), container.world.provider.getDimension(),
+                TaskRegistry.Kind.SAVE, container.world.isRemote ? TaskRegistry.Backend.CLIENT : TaskRegistry.Backend.SERVER,
+                container.file.getName());
+        }
+    }
+
+    private QueueTickHandler() {}
+
+    public synchronized void clear() {
+        for (Save save : queue) save.task.finish();
+        queue.clear();
+        clientPending = serverPending = false;
+    }
+
+    public void clientTick(World world, EntityPlayer player) {
+        if (clientPending) processQueue(true, world, player);
+    }
+
+    @SubscribeEvent
+    public void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END && serverPending) processQueue(false, null, null);
+    }
+
+    private EntityPlayer owner(Save save, World clientWorld, EntityPlayer clientPlayer) {
+        World world = save.container.world;
+        if (world.isRemote) {
+            return world == clientWorld && clientPlayer != null && save.task.owner.equals(clientPlayer.getUniqueID())
+                ? clientPlayer : null;
+        }
+        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+        if (server == null || DimensionManager.getWorld(save.task.dimension) != world) return null;
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
+            if (save.task.owner.equals(player.getUniqueID()) && player.world == world) return player;
+        }
+        return null;
+    }
+
+    private synchronized void processQueue(boolean client, World clientWorld, EntityPlayer clientPlayer) {
+        Save save = null;
+        for (int remaining = queue.size(); remaining > 0; remaining--) {
+            Save candidate = queue.poll();
+            if (candidate.container.world.isRemote == client) { save = candidate; break; }
+            queue.offer(candidate);
+        }
+        if (save == null) return;
+        SchematicContainer container = save.container;
+        EntityPlayer player = null;
+        boolean pending = false;
+        File written = null;
+        try {
+            player = owner(save, clientWorld, clientPlayer);
+            if (player == null || save.task.progress().cancelling) return;
+            if (container.hasNext()) {
+                if (container.isFirst()) player.sendMessage(new TextComponentTranslation(
+                    Names.Command.Save.Message.SAVE_STARTED, container.chunkCount, container.file.getName()));
+                container.next();
+            }
+            save.task.update(TaskRegistry.Stage.CAPTURE, container.processedChunks, container.chunkCount, 0, 0);
+            if (container.hasNext()) {
+                pending = true;
+                return;
+            }
+            if (!save.task.beginWrite()) return;
+            for (TileEntity entity : container.schematic.getTileEntities()) {
+                if (!entity.hasWorld()) entity.setWorld(container.world);
+            }
+            if (container.memory != null) {
+                SchematicFileSnapshot snapshot = SchematicFileSnapshot.capture(container.schematic);
+                Consumer<SchematicFileSnapshot> memory = container.memory;
+                SchematicaPlus.proxy.runSaveCallback(() -> memory.accept(snapshot));
+                return;
+            }
+            File saved = SchematicFormat.saveToFile(container.file, container.schematic, container.world,
+                container.includeNBT, container.includeEntities, player.getName());
+            written = saved;
+            boolean renamed = saved != null && !saved.getName().equals(container.file.getName());
+            String message = saved != null ? (renamed ? Names.Command.Save.Message.SAVE_EXTENDED
+                : Names.Command.Save.Message.SAVE_SUCCESSFUL) : Names.Command.Save.Message.SAVE_FAILED;
+            player.sendMessage(new TextComponentTranslation(message,
+                saved != null ? saved.getName() : container.file.getName()));
+        } catch (Exception e) {
+            Reference.logger.error("Schematic save task failed", e);
+            if (player != null) player.sendMessage(new TextComponentTranslation(
+                Names.Command.Save.Message.SAVE_FAILED, container.file.getName()));
+        } finally {
+            if (save.task.progress().cancelling) {
+                pending = false;
+                if (player != null) player.sendMessage(new TextComponentTranslation(
+                    "litematica.message.error.schematic_save_interrupted"));
+            }
+            if (pending) queue.offer(save);
+            else {
+                save.task.finish();
+                if (container.completed != null) {
+                    Consumer<File> completed = container.completed;
+                    File result = written;
+                    SchematicaPlus.proxy.runSaveCallback(() -> completed.accept(result));
+                }
+            }
+            updatePending();
+        }
+    }
+
+    private void updatePending() {
+        clientPending = queue.stream().anyMatch(save -> save.container.world.isRemote);
+        serverPending = queue.stream().anyMatch(save -> !save.container.world.isRemote);
+    }
+
+    public synchronized boolean canQueue(EntityPlayer player) {
+        return queue.size() < 4 && queue.stream().noneMatch(task -> task.task.owner.equals(player.getUniqueID()));
+    }
+
+    public synchronized void queueSchematic(SchematicContainer container) {
+        if (!canQueue(container.player)) throw new IllegalStateException("A save is already pending or the save queue is full");
+        queue.offer(new Save(container));
+        updatePending();
+    }
+}

@@ -1,0 +1,13 @@
+{
+	"pack": {
+		"pack_format": 3,
+		"description": "Schematica Plus contents"
+	},
+	"language": {
+		"lzh": {
+			"name": "文言",
+			"region": "華夏",
+			"bidirectional": false
+		}
+	}
+}

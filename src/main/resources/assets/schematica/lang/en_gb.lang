@@ -1,0 +1,13 @@
+# gui - config - render
+schematica.config.blockDelta=Block Delta
+schematica.config.blockDelta.tooltip=Delta value used for highlighting (if you experience z-fighting increase this).
+
+# gui - config - printer
+schematica.config.placeDelay=Placement Delay
+schematica.config.placeDelay.tooltip=Delay between placement attempts (in ticks).
+schematica.config.timeout=Timeout
+schematica.config.timeout.tooltip=Timeout before re-trying failed blocks.
+schematica.config.destroyBlocks=Destroy Blocks
+schematica.config.destroyBlocks.tooltip=The printer will destroy blocks (creative mode only).
+schematica.config.destroyInstantly=Destroy Instantly
+schematica.config.destroyInstantly.tooltip=Destroy all blocks that can be destroyed in one tick.

@@ -1,0 +1,25 @@
+# gui - config - render
+schematica.config.blockDelta=블럭 델타
+schematica.config.blockDelta.tooltip=표시에 쓰이는 델타 값 (만약 z-fighting 이 생기면 높이세요).
+
+# gui - config - printer
+schematica.config.placeDelay=놓기 지연시간
+schematica.config.placeDelay.tooltip=놓기 시도간의 지연시간 (틱 단위).
+schematica.config.timeout=시간 제한
+schematica.config.timeout.tooltip=실패한 블럭을 재시도하기 전의 시간 제한.
+schematica.config.destroyBlocks=블럭 부수기
+schematica.config.destroyBlocks.tooltip=프린터가 블럭을 부숩니다 (크리에이티브 모드 전용).
+schematica.config.destroyInstantly=즉시 부수기
+schematica.config.destroyInstantly.tooltip=1틱안에 가능한 모든 블럭을 부수기.
+
+# gui - config - server
+schematica.config.printerEnabled=프린터 허용
+schematica.config.printerEnabled.tooltip=플레이어가 프린터를 쓰는 것을 허용.
+schematica.config.saveEnabled=저장 허용
+schematica.config.saveEnabled.tooltip=플레이어가 schematic을 저장하는 것을 허용.
+schematica.config.loadEnabled=불러오기 허용
+schematica.config.loadEnabled.tooltip=플레이어가 schematic을 불러오는 것을 허용.
+
+# commands - save
+schematica.command.save.usage=/schematicaSave <X시작> <Y시작> <Z시작> <X끝> <Y끝> <Z끝> <이름>
+schematica.command.save.playersOnly=이 커맨드는 오직 플레이어만 사용할 수 있습니다.

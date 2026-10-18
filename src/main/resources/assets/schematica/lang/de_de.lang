@@ -1,0 +1,27 @@
+# gui - config - printer
+schematica.config.placeDelay=Abstand zwischen Blockplatzierung
+schematica.config.placeDelay.tooltip=Abstan (in ticks) in der ein Spieler Blöcke setzen kann.
+schematica.config.destroyBlocks=Zerstöre Blöcke
+schematica.config.destroyBlocks.tooltip=Der Drucker wird Blöcke entfernen können (Nur im Kreativmodus verfügbar).
+schematica.config.destroyInstantly=Zerstöre Blöcke sofort
+schematica.config.destroyInstantly.tooltip=Zerstöre alle Blöcke innerhalb eines Ticks.
+
+# gui - config - server
+schematica.config.printerEnabled=Drucken erlauben
+schematica.config.printerEnabled.tooltip=Erlaubt es Spieler, den Drucker zu benutzen.
+schematica.config.saveEnabled=Speichern erlauben
+schematica.config.saveEnabled.tooltip=Erlaubt es Spielern, Schematics zu speichern.
+schematica.config.loadEnabled=Laden erlauben
+schematica.config.loadEnabled.tooltip=Erlaubt es Spielern, Schematics zu laden.
+
+# commands - save
+schematica.command.save.playersOnly=Nur Spieler können dieses Kommando ausführen.
+schematica.command.save.started=%d Chunks werden in %s gespeichert.
+schematica.command.save.quotaExceeded=Du kannst keine Schematics mehr speichern, da das Limit erreicht wurde. Bitte nutze /schematicaList und /schematicaRemove um alte Schematics zu löschen.
+schematica.command.save.playerSchematicDirUnavailable=Es gab ein Problem, deine Schematic zu speichern. Bitte kontaktiere umgehend einen Server Administrator.
+
+# commands - list
+schematica.command.list.download=Herunterladen
+schematica.command.list.header=--- Schematics: Seite %d von %d ---
+schematica.command.list.noSuchPage=Keine Seite
+schematica.command.list.noSchematics=Es sind keine Schematics verfügbar.

@@ -1,0 +1,328 @@
+# Blocks of newer Minecraft versions that 1.12 does not have, and what loading puts in their place (MissingBlocks).
+# Names without a namespace are minecraft:. Targets are flattened 1.13 names from legacy_block_states.txt (the block
+# keeps the facing/half/shape... of the file where the target has them), "air", or "!" + a 1.12 state string.
+#
+# alias <name> <target>  the same block under a newer name: loaded as it is, never reported as missing
+# block <name> <target>  the closest 1.12 block
+# rule  <from> <to>      replaces the first <from> in a name, tried in this order until a name is known
+# rule  <from>           removes the first <from> in a name
+#
+# Colours, wood types and shapes (stairs, slabs, walls, fences, doors...) not listed here are worked out from the
+# name; see MissingBlockGuesses.
+
+# ---- renames since the 1.13 snapshot names of the conversion table
+alias	oak_wood	oak_bark
+alias	spruce_wood	spruce_bark
+alias	birch_wood	birch_bark
+alias	jungle_wood	jungle_bark
+alias	acacia_wood	acacia_bark
+alias	dark_oak_wood	dark_oak_bark
+alias	spawner	mob_spawner
+alias	melon	melon_block
+alias	nether_portal	portal
+alias	attached_pumpkin_stem	pumpkin_stem
+alias	attached_melon_stem	melon_stem
+alias	short_grass	grass
+alias	dirt_path	grass_path
+alias	oak_sign	sign
+alias	oak_wall_sign	wall_sign
+alias	smooth_stone_slab	stone_slab
+alias	flower_pot	!minecraft:flower_pot
+alias	skeleton_skull	!minecraft:skull[facing=up]
+alias	skeleton_wall_skull	!minecraft:skull
+alias	pumpkin	carved_pumpkin
+alias	cave_air	air
+alias	void_air	air
+
+# ---- heads and pots keep the block; their kind or plant is not kept
+block	wither_skeleton_skull	!minecraft:skull[facing=up]
+block	zombie_head	!minecraft:skull[facing=up]
+block	player_head	!minecraft:skull[facing=up]
+block	creeper_head	!minecraft:skull[facing=up]
+block	dragon_head	!minecraft:skull[facing=up]
+block	piglin_head	!minecraft:skull[facing=up]
+block	wither_skeleton_wall_skull	!minecraft:skull
+block	zombie_wall_head	!minecraft:skull
+block	player_wall_head	!minecraft:skull
+block	creeper_wall_head	!minecraft:skull
+block	dragon_wall_head	!minecraft:skull
+block	piglin_wall_head	!minecraft:skull
+
+# ---- 1.13
+block	blue_ice	packed_ice
+block	kelp	water
+block	kelp_plant	water
+block	seagrass	water
+block	tall_seagrass	water
+block	bubble_column	water
+block	sea_pickle	water
+block	conduit	sea_lantern
+block	turtle_egg	air
+block	dried_kelp_block	green_terracotta
+block	tube_coral_block	blue_glazed_terracotta
+block	brain_coral_block	pink_glazed_terracotta
+block	bubble_coral_block	magenta_glazed_terracotta
+block	fire_coral_block	red_glazed_terracotta
+block	horn_coral_block	yellow_glazed_terracotta
+block	dead_tube_coral_block	light_gray_glazed_terracotta
+block	dead_brain_coral_block	light_gray_glazed_terracotta
+block	dead_bubble_coral_block	light_gray_glazed_terracotta
+block	dead_fire_coral_block	light_gray_glazed_terracotta
+block	dead_horn_coral_block	light_gray_glazed_terracotta
+block	prismarine_brick_stairs	stone_brick_stairs
+block	shulker_box	purple_shulker_box
+
+# ---- 1.14
+block	barrel	chest
+block	smoker	furnace
+block	blast_furnace	furnace
+block	lantern	torch
+block	soul_lantern	torch
+block	bell	air
+block	campfire	air
+block	soul_campfire	air
+block	scaffolding	air
+block	grindstone	anvil
+block	lectern	bookshelf
+block	composter	cauldron
+block	loom	crafting_table
+block	cartography_table	crafting_table
+block	fletching_table	crafting_table
+block	smithing_table	crafting_table
+block	stonecutter	stone_slab
+block	jigsaw	structure_block
+block	sweet_berry_bush	air
+block	bamboo	sugar_cane
+block	bamboo_sapling	air
+block	cornflower	blue_orchid
+block	lily_of_the_valley	oxeye_daisy
+block	wither_rose	poppy
+block	potted_cornflower	!minecraft:flower_pot
+block	potted_lily_of_the_valley	!minecraft:flower_pot
+block	potted_wither_rose	!minecraft:flower_pot
+block	stone_stairs	stone_brick_stairs
+
+# ---- 1.15
+block	bee_nest	hay_block
+block	beehive	hay_block
+block	honey_block	slime_block
+block	honeycomb_block	yellow_terracotta
+
+# ---- 1.16
+block	crimson_nylium	netherrack
+block	warped_nylium	netherrack
+block	crimson_roots	air
+block	warped_roots	air
+block	nether_sprouts	air
+block	crimson_fungus	red_mushroom
+block	warped_fungus	brown_mushroom
+block	weeping_vines	air
+block	weeping_vines_plant	air
+block	twisting_vines	air
+block	twisting_vines_plant	air
+block	shroomlight	glowstone
+block	warped_wart_block	cyan_terracotta
+block	soul_soil	soul_sand
+block	soul_fire	fire
+block	soul_torch	torch
+block	soul_wall_torch	wall_torch
+block	basalt	gray_terracotta
+block	polished_basalt	gray_terracotta
+block	smooth_basalt	gray_concrete
+block	blackstone	nether_bricks
+block	polished_blackstone	nether_bricks
+block	chiseled_polished_blackstone	nether_bricks
+block	gilded_blackstone	nether_bricks
+block	crying_obsidian	obsidian
+block	respawn_anchor	obsidian
+block	lodestone	chiseled_stone_bricks
+block	target	hay_block
+block	chain	iron_bars
+block	iron_chain	iron_bars
+block	netherite_block	coal_block
+block	ancient_debris	brown_terracotta
+block	nether_gold_ore	nether_quartz_ore
+block	quartz_bricks	quartz_block
+block	chiseled_nether_bricks	nether_bricks
+
+# ---- 1.17
+block	deepslate	stone
+block	cobbled_deepslate	cobblestone
+block	polished_deepslate	polished_andesite
+block	chiseled_deepslate	chiseled_stone_bricks
+block	reinforced_deepslate	obsidian
+block	tuff	andesite
+block	polished_tuff	polished_andesite
+block	chiseled_tuff	chiseled_stone_bricks
+block	chiseled_tuff_bricks	chiseled_stone_bricks
+block	calcite	diorite
+block	dripstone_block	terracotta
+block	pointed_dripstone	air
+block	amethyst_block	purpur_block
+block	budding_amethyst	purpur_block
+block	amethyst_cluster	air
+block	small_amethyst_bud	air
+block	medium_amethyst_bud	air
+block	large_amethyst_bud	air
+block	tinted_glass	gray_stained_glass
+block	moss_block	green_wool
+block	moss_carpet	green_carpet
+block	azalea	oak_leaves
+block	flowering_azalea	oak_leaves
+block	azalea_leaves	oak_leaves
+block	flowering_azalea_leaves	oak_leaves
+block	potted_azalea_bush	!minecraft:flower_pot
+block	potted_flowering_azalea_bush	!minecraft:flower_pot
+block	glow_lichen	air
+block	candle_cake	cake
+block	raw_iron_block	iron_block
+block	raw_gold_block	gold_block
+block	raw_copper_block	orange_terracotta
+block	copper_ore	iron_ore
+block	powder_snow	snow_block
+block	powder_snow_cauldron	cauldron
+block	water_cauldron	cauldron
+block	lava_cauldron	cauldron
+block	lightning_rod	end_rod
+block	sculk	black_wool
+block	sculk_vein	air
+block	sculk_sensor	black_wool
+block	calibrated_sculk_sensor	black_wool
+block	sculk_shrieker	black_wool
+block	sculk_catalyst	black_wool
+block	rooted_dirt	coarse_dirt
+block	hanging_roots	air
+block	spore_blossom	air
+block	big_dripleaf	air
+block	big_dripleaf_stem	air
+block	small_dripleaf	air
+block	cave_vines	air
+block	cave_vines_plant	air
+block	light	air
+
+# ---- 1.19
+block	mud	brown_concrete
+block	packed_mud	terracotta
+block	mangrove_roots	jungle_leaves
+block	muddy_mangrove_roots	coarse_dirt
+block	mangrove_propagule	air
+block	ochre_froglight	glowstone
+block	verdant_froglight	glowstone
+block	pearlescent_froglight	glowstone
+block	frogspawn	air
+
+# ---- 1.20
+block	bamboo_block	birch_log
+block	bamboo_mosaic	birch_planks
+block	pink_petals	air
+block	chiseled_bookshelf	bookshelf
+block	decorated_pot	!minecraft:flower_pot
+block	suspicious_sand	sand
+block	suspicious_gravel	gravel
+block	sniffer_egg	air
+block	torchflower	poppy
+block	torchflower_crop	air
+block	pitcher_plant	rose_bush
+block	pitcher_crop	air
+block	potted_torchflower	!minecraft:flower_pot
+block	potted_cherry_sapling	!minecraft:flower_pot
+block	potted_mangrove_propagule	!minecraft:flower_pot
+block	potted_crimson_fungus	!minecraft:flower_pot
+block	potted_warped_fungus	!minecraft:flower_pot
+block	potted_crimson_roots	!minecraft:flower_pot
+block	potted_warped_roots	!minecraft:flower_pot
+block	potted_bamboo	!minecraft:flower_pot
+
+# ---- 1.21
+block	copper_block	orange_terracotta
+block	crafter	dropper
+block	trial_spawner	mob_spawner
+block	vault	iron_block
+block	heavy_core	anvil
+
+# ---- 1.21.4 - 1.21.6
+block	resin_block	orange_terracotta
+block	resin_bricks	bricks
+block	resin_clump	air
+block	creaking_heart	birch_log
+block	pale_moss_block	light_gray_wool
+block	pale_moss_carpet	light_gray_carpet
+block	pale_hanging_moss	air
+block	open_eyeblossom	air
+block	closed_eyeblossom	air
+block	potted_open_eyeblossom	!minecraft:flower_pot
+block	potted_closed_eyeblossom	!minecraft:flower_pot
+block	potted_pale_oak_sapling	!minecraft:flower_pot
+block	leaf_litter	air
+block	wildflowers	air
+block	bush	grass
+block	firefly_bush	grass
+block	cactus_flower	air
+block	short_dry_grass	dead_bush
+block	tall_dry_grass	dead_bush
+block	test_block	structure_block
+block	test_instance_block	structure_block
+block	dried_ghast	air
+
+# ---- name rules, most specific first
+# copper: doors, lights and such by kind, then by how weathered
+rule	copper_door	iron_door
+rule	copper_trapdoor	iron_trapdoor
+rule	copper_bulb	redstone_lamp
+rule	copper_grate	iron_bars
+rule	copper_bars	iron_bars
+rule	copper_chain	iron_bars
+rule	copper_chest	chest
+rule	copper_golem_statue	air
+rule	copper_wall_torch	wall_torch
+rule	copper_torch	torch
+rule	copper_lantern	torch
+rule	waxed_
+rule	oxidized_cut_copper	cyan_terracotta
+rule	weathered_cut_copper	cyan_terracotta
+rule	exposed_cut_copper	terracotta
+rule	cut_copper	orange_terracotta
+rule	chiseled_copper	orange_terracotta
+rule	oxidized_copper	cyan_terracotta
+rule	weathered_copper	cyan_terracotta
+rule	exposed_copper	terracotta
+rule	oxidized_
+rule	weathered_
+rule	exposed_
+# stone kinds
+rule	deepslate_brick	stone_brick
+rule	deepslate_tile	stone_brick
+rule	cobbled_deepslate	cobblestone
+rule	polished_deepslate	polished_andesite
+rule	deepslate_
+rule	polished_blackstone_brick	nether_brick
+rule	polished_blackstone	nether_brick
+rule	blackstone	nether_brick
+rule	tuff_brick	stone_brick
+rule	polished_tuff	polished_andesite
+rule	tuff	andesite
+rule	mud_brick	brick
+rule	resin_brick	brick
+rule	red_nether_brick_	nether_brick_
+rule	end_stone_brick_	sandstone_
+rule	smooth_red_sandstone_	red_sandstone_
+rule	cut_red_sandstone_	red_sandstone_
+rule	smooth_sandstone_	sandstone_
+rule	cut_sandstone_	sandstone_
+rule	smooth_quartz_	quartz_
+rule	quartz_brick	quartz_block
+rule	mossy_cobblestone_	cobblestone_
+rule	mossy_stone_brick_	stone_brick_
+rule	cracked_
+rule	chiseled_
+# woods: the 1.12 wood that looks closest
+rule	stripped_
+rule	_stem	_log
+rule	_hyphae	_wood
+rule	bamboo_mosaic_	birch_
+rule	pale_oak_	birch_
+rule	cherry_	birch_
+rule	mangrove_	jungle_
+rule	crimson_	acacia_
+rule	warped_	dark_oak_
+rule	bamboo_	birch_

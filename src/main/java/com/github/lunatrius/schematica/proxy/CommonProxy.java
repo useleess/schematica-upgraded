@@ -1,0 +1,323 @@
+package com.github.lunatrius.schematica.proxy;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+
+import com.github.lunatrius.schematica.api.ISchematic;
+import com.github.lunatrius.schematica.api.SchematicOrigin;
+import com.github.lunatrius.schematica.api.SchematicRegion;
+import com.github.lunatrius.schematica.command.CommandSchematicaList;
+import com.github.lunatrius.schematica.command.CommandSchematicaRemove;
+import com.github.lunatrius.schematica.command.CommandSchematicaSave;
+import com.github.lunatrius.schematica.handler.ConfigurationHandler;
+import com.github.lunatrius.schematica.handler.DownloadHandler;
+import com.github.lunatrius.schematica.handler.PlayerHandler;
+import com.github.lunatrius.schematica.handler.QueueTickHandler;
+import com.github.lunatrius.schematica.internal.lunatriuscore.util.vector.Vector3i;
+import com.github.lunatrius.schematica.network.PacketHandler;
+import com.github.lunatrius.schematica.reference.Reference;
+import com.github.lunatrius.schematica.util.FileUtils;
+import com.github.lunatrius.schematica.util.SchematicLimits;
+import com.github.lunatrius.schematica.world.chunk.CaptureSource;
+import com.github.lunatrius.schematica.world.chunk.SchematicContainer;
+import com.github.lunatrius.schematica.world.chunk.WorldCaptureSource;
+import com.github.lunatrius.schematica.world.schematic.SchematicFileSnapshot;
+import com.github.lunatrius.schematica.world.schematic.SchematicUtil;
+import com.github.lunatrius.schematica.world.storage.RegionSelection;
+import com.github.lunatrius.schematica.world.storage.Schematic;
+
+public abstract class CommonProxy {
+
+    public boolean isSaveEnabled = true;
+    public boolean isLoadEnabled = true;
+    /** Whether the server allows the printer (set by the capabilities message). */
+    public volatile boolean printerEnabledByServer = true;
+    public volatile boolean supportsWorldMove;
+    /** The server runs Plus and accepts uploaded full-NBT edits (remote edit protocol). */
+    public volatile boolean supportsRemoteEdit;
+    /** The server runs Plus and applies placement intents (accurate placement protocol). */
+    public volatile boolean supportsAccuratePlacement;
+    /** The server runs Plus and places fence gates in the air for the printer (air placement). */
+    public volatile boolean supportsAirPlacement;
+    /** The server runs Plus and accepts printer / Easy Place clicks up to this eye distance; 0 = vanilla reach only. */
+    public volatile double serverPrinterRange;
+    /** The server runs Plus and moves items out of shulker boxes in the inventory for the printer (shulker restock). */
+    public volatile boolean supportsShulkerRestock;
+
+    public void worldMoveFinished(long id, boolean success) {}
+
+    public void remoteEditStatus(com.github.lunatrius.schematica.network.message.MessageEditStatus status) {}
+
+    public void runSaveCallback(Runnable callback) { callback.run(); }
+
+    /** Runs a task on the client thread (immediately on a server, which never receives client messages). */
+    public void runOnClientThread(Runnable task) { task.run(); }
+
+    /** Shows a chat message to the local player; nothing on a dedicated server. */
+    public void sendClientMessage(ITextComponent message) {}
+
+    public void preInit(FMLPreInitializationEvent event) {
+        Reference.logger = event.getModLog();
+        ConfigurationHandler.init(event.getSuggestedConfigurationFile());
+    }
+
+    public void init(FMLInitializationEvent event) {
+        PacketHandler.init();
+        MinecraftForge.EVENT_BUS.register(ConfigurationHandler.INSTANCE);
+        MinecraftForge.EVENT_BUS.register(QueueTickHandler.INSTANCE);
+        MinecraftForge.EVENT_BUS.register(DownloadHandler.INSTANCE);
+        MinecraftForge.EVENT_BUS.register(com.github.lunatrius.schematica.handler.WorldEditQueue.INSTANCE);
+        MinecraftForge.EVENT_BUS.register(com.github.lunatrius.schematica.handler.AccuratePlacement.INSTANCE);
+        // Also in single player, so the integrated server's printerEnabled and accurate placement reach the client
+        MinecraftForge.EVENT_BUS.register(PlayerHandler.INSTANCE);
+    }
+
+    public void postInit(FMLPostInitializationEvent event) {}
+
+    public void serverStarting(FMLServerStartingEvent event) {
+        if (ConfigurationHandler.serversideSchematicsEnabled) {
+            event.registerServerCommand(new CommandSchematicaSave());
+            event.registerServerCommand(new CommandSchematicaList());
+            event.registerServerCommand(new CommandSchematicaRemove());
+        }
+    }
+
+    public void createFolders() {
+        if (!ConfigurationHandler.schematicDirectory.exists()) {
+            if (!ConfigurationHandler.schematicDirectory.mkdirs()) {
+                Reference.logger.warn("Could not create schematic directory [{}]!",
+                    ConfigurationHandler.schematicDirectory.getAbsolutePath());
+            }
+        }
+    }
+
+    public abstract File getDataDirectory();
+
+    public File getDirectory(final String directory) {
+        final File dataDirectory = getDataDirectory();
+        final File subDirectory = new File(dataDirectory, directory);
+
+        if (!subDirectory.exists()) {
+            if (!subDirectory.mkdirs()) {
+                Reference.logger.error("Could not create directory [{}]!", subDirectory.getAbsolutePath());
+            }
+        }
+
+        try {
+            return subDirectory.getCanonicalFile();
+        } catch (IOException e) {
+            Reference.logger.error("Could not canonize path!", e);
+        }
+
+        return subDirectory;
+    }
+
+    public void resetSettings() {
+        printerEnabledByServer = true;
+        supportsWorldMove = false;
+        supportsRemoteEdit = false;
+        supportsAccuratePlacement = false;
+        supportsAirPlacement = false;
+        serverPrinterRange = 0;
+        supportsShulkerRestock = false;
+        this.isSaveEnabled = true;
+        this.isLoadEnabled = true;
+    }
+
+    public void unloadSchematic() {}
+
+    /**
+     * Resolves the server-side world corresponding to the given (possibly client-side) world: server worlds hold the
+     * full tile entity data (inventories, etc.) that client worlds lack. Falls back to the given world when no
+     * server world is available (a client on a remote server).
+     */
+    protected World getServerWorld(final World world) {
+        if (!world.isRemote) return world;
+        try {
+            final MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+            if (server != null && server.isServerRunning() && !server.isServerStopped()) {
+                final WorldServer serverWorld = server.getWorld(world.provider.getDimension());
+                if (serverWorld != null) {
+                    return serverWorld;
+                }
+            }
+        } catch (Exception e) {
+            Reference.logger.debug("Could not obtain server world, using client world for TE data", e);
+        }
+        return world;
+    }
+
+    public void copyChunkToSchematic(final SchematicContainer container, final int chunkX, final int chunkZ) {
+        final ISchematic schematic = container.schematic;
+        final int minX = container.minX, maxX = container.maxX, minY = container.minY, maxY = container.maxY;
+        final int minZ = container.minZ, maxZ = container.maxZ;
+        // Block entities come from the server world when possible, since client-side ones often lack full NBT.
+        final CaptureSource source = container.source != null ? container.source
+            : new WorldCaptureSource(container.world, getServerWorld(container.world));
+
+        final int localMinX = minX < (chunkX << 4) ? 0 : (minX & 15);
+        final int localMaxX = maxX > ((chunkX << 4) + 15) ? 15 : (maxX & 15);
+        final int localMinZ = minZ < (chunkZ << 4) ? 0 : (minZ & 15);
+        final int localMaxZ = maxZ > ((chunkZ << 4) + 15) ? 15 : (maxZ & 15);
+
+        for (int chunkLocalX = localMinX; chunkLocalX <= localMaxX; chunkLocalX++) {
+            for (int chunkLocalZ = localMinZ; chunkLocalZ <= localMaxZ; chunkLocalZ++) {
+                for (int y = minY; y <= maxY; y++) {
+                    final int x = chunkLocalX | (chunkX << 4);
+                    final int z = chunkLocalZ | (chunkZ << 4);
+
+                    final int localX = x - minX;
+                    final int localY = y - minY;
+                    final int localZ = z - minZ;
+
+                    if (!schematic.containsBlock(localX, localY, localZ)) continue;
+
+                    try {
+                        if (container.visibleOnly && !CaptureSource.exposed(source, x, y, z)
+                            && !(container.supportBlocks && CaptureSource.support(source, x, y, z))) {
+                            continue;
+                        }
+                        final IBlockState state = source.state(x, y, z);
+                        final boolean success = schematic.setBlockState(localX, localY, localZ, state);
+
+                        if (success && state.getBlock().hasTileEntity(state)) {
+                            try {
+                                final TileEntity tileEntity = source.tile(x, y, z, minX, minY, minZ);
+                                if (tileEntity != null) schematic.setTileEntity(new BlockPos(localX, localY, localZ), tileEntity);
+                            } catch (Exception e) {
+                                Reference.logger.error("Error while trying to save tile entity at {} {} {}!", x, y, z, e);
+                            }
+                        }
+                    } catch (Exception e) {
+                        Reference.logger.error("Something went wrong!", e);
+                    }
+                }
+            }
+        }
+
+        final int minX1 = localMinX | (chunkX << 4);
+        final int minZ1 = localMinZ | (chunkZ << 4);
+        final int maxX1 = localMaxX | (chunkX << 4);
+        final int maxZ1 = localMaxZ | (chunkZ << 4);
+        final AxisAlignedBB bb = new AxisAlignedBB(minX1, minY, minZ1, maxX1 + 1, maxY + 1, maxZ1 + 1);
+        for (Entity entity : source.entities(bb, minX, minY, minZ)) {
+            if (schematic.containsBlock((int) Math.floor(entity.posX), (int) Math.floor(entity.posY), (int) Math.floor(entity.posZ))) {
+                schematic.addEntity(entity);
+            }
+        }
+    }
+
+    public boolean saveSchematic(EntityPlayer player, File directory, String filename, World world, Vector3i from,
+        Vector3i to) {
+        return saveSchematic(player, directory, filename, world, from, to, Collections.emptyList(), SchematicOrigin.ZERO, null, null, null);
+    }
+
+    public boolean saveSchematic(EntityPlayer player, File directory, String filename, World world, RegionSelection selection) {
+        return saveSchematic(player, directory, filename, world, selection, null);
+    }
+
+    /** Saves the selection; completed later receives the written file, or null when the save failed or was cancelled. */
+    public boolean saveSchematic(EntityPlayer player, File directory, String filename, World world,
+        RegionSelection selection, Consumer<File> completed) {
+        return saveSchematic(player, directory, filename, world, selection, completed, null);
+    }
+
+    /** As above, reading through the given options (block source, visible blocks only, support blocks) when not null. */
+    public boolean saveSchematic(EntityPlayer player, File directory, String filename, World world,
+        RegionSelection selection, Consumer<File> completed, SchematicContainer.Options options) {
+        return saveSchematic(player, directory, filename, world,
+            new Vector3i(selection.minX, selection.minY, selection.minZ), new Vector3i(selection.maxX, selection.maxY, selection.maxZ),
+            selection.localRegions, selection.localOrigin, null, completed, options);
+    }
+
+    /** Captures the selection like a save, but hands the encoded schematic to the client instead of writing a file. */
+    public boolean captureSchematic(EntityPlayer player, String name, World world, RegionSelection selection,
+        Consumer<SchematicFileSnapshot> memory) {
+        return saveSchematic(player, null, name, world,
+            new Vector3i(selection.minX, selection.minY, selection.minZ), new Vector3i(selection.maxX, selection.maxY, selection.maxZ),
+            selection.localRegions, selection.localOrigin, Objects.requireNonNull(memory), null, null);
+    }
+
+    private boolean saveSchematic(EntityPlayer player, File directory, String filename, World world, Vector3i from,
+        Vector3i to, List<SchematicRegion> regions, SchematicOrigin origin, Consumer<SchematicFileSnapshot> memory,
+        Consumer<File> completed, SchematicContainer.Options options) {
+        synchronized (QueueTickHandler.INSTANCE) {
+            try {
+                if (!QueueTickHandler.INSTANCE.canQueue(player)) {
+                    throw new IllegalStateException("A save is already pending or the save queue is full");
+                }
+                String iconName = "";
+
+                if (memory == null) try {
+                    String[] parts = filename.split(";");
+                    if (parts.length == 2) {
+                        iconName = parts[0];
+                        filename = parts[1];
+                    }
+                } catch (Exception e) {
+                    Reference.logger.error("Failed to parse icon data!", e);
+                }
+
+                final int minX = Math.min(from.x, to.x);
+                final int maxX = Math.max(from.x, to.x);
+                final int minY = Math.min(from.y, to.y);
+                final int maxY = Math.max(from.y, to.y);
+                final int minZ = Math.min(from.z, to.z);
+                final int maxZ = Math.max(from.z, to.z);
+
+                SchematicLimits.worldBounds(minX, minY, minZ, maxX, maxY, maxZ);
+                final int width = SchematicLimits.dimension(minX, maxX);
+                final int height = SchematicLimits.dimension(minY, maxY);
+                final int length = SchematicLimits.dimension(minZ, maxZ);
+                final File file = memory != null ? new File(filename) : FileUtils.resolveSchematicFile(directory, filename);
+
+                final Schematic schematic = new Schematic(SchematicUtil.getIconFromName(iconName), width, height, length);
+                schematic.setRegions(regions);
+                schematic.setOrigin(origin);
+                final SchematicContainer container = new SchematicContainer(schematic, player,
+                    options != null && options.source != null ? world : getServerWorld(world), file,
+                    minX, maxX, minY, maxY, minZ, maxZ);
+                container.memory = memory;
+                container.completed = completed;
+                if (options != null) {
+                    container.source = options.source;
+                    container.visibleOnly = options.visibleOnly;
+                    container.supportBlocks = options.supportBlocks;
+                }
+                QueueTickHandler.INSTANCE.queueSchematic(container);
+
+                return true;
+            } catch (Exception e) {
+                Reference.logger.error("Failed to save schematic!", e);
+            }
+            return false;
+        }
+    }
+
+    public abstract boolean loadSchematic(EntityPlayer player, File directory, String filename);
+
+    public abstract boolean isPlayerQuotaExceeded(EntityPlayer player);
+
+    public abstract File getPlayerSchematicDirectory(EntityPlayer player, boolean privateDirectory);
+}
