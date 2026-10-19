@@ -172,6 +172,7 @@ public class ConfigurationHandler {
 
     public static void init(File configFile) {
         if (configuration == null) {
+            boolean firstStart = !configFile.exists();
             try {
                 com.github.lunatrius.schematica.util.FileUtils.migrateLegacyConfiguration(configFile);
             } catch (IOException e) {
@@ -179,7 +180,18 @@ public class ConfigurationHandler {
             }
             configuration = new Configuration(configFile, VERSION);
             loadConfiguration();
+            if (firstStart) importLitematica(configFile.getAbsoluteFile().getParentFile());
         }
+    }
+
+    /** On the first start, copies the options of an installed Litematica so players keep their setup. */
+    private static void importLitematica(File configDirectory) {
+        com.google.gson.JsonObject litematica = LitematicaSettingsImport.find(configDirectory.toPath(), configDirectory.getParentFile().toPath());
+        if (litematica == null) return;
+        int count = LitematicaSettingsImport.apply(configuration, litematica);
+        Reference.logger.info("Copied " + count + " options from Litematica");
+        loadConfiguration();
+        configuration.save();
     }
 
     public static void loadConfiguration() {

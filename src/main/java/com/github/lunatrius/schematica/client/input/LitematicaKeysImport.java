@@ -1,8 +1,5 @@
 package com.github.lunatrius.schematica.client.input;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,10 +9,10 @@ import java.util.Map;
 
 import org.lwjgl.input.Keyboard;
 
+import com.github.lunatrius.schematica.handler.LitematicaSettingsImport;
 import com.github.lunatrius.schematica.reference.Reference;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 /** One-time copy of the keybinds of an installed Litematica (malilib config) on the first start. */
 public final class LitematicaKeysImport {
@@ -61,17 +58,11 @@ public final class LitematicaKeysImport {
 
     /** Copies the bindings from the first Litematica config found; returns how many hotkeys were set. */
     public static int run(Path configDirectory, Path gameDirectory, List<Hotkey> bindings) {
-        for (Path file : new Path[] {gameDirectory.resolve("liteconfig/common/litematica.json"), configDirectory.resolve("litematica.json")}) {
-            if (!Files.isRegularFile(file)) continue;
-            try {
-                if (Files.size(file) > 4 * 1024 * 1024) continue;
-                JsonObject root = new JsonParser().parse(new String(Files.readAllBytes(file), StandardCharsets.UTF_8)).getAsJsonObject();
-                int count = apply(root, bindings);
-                Reference.logger.info("Copied " + count + " keybinds from " + file);
-                return count;
-            } catch (IOException | RuntimeException error) { Reference.logger.warn("Could not read Litematica keybinds from " + file, error); }
-        }
-        return 0;
+        JsonObject root = LitematicaSettingsImport.find(configDirectory, gameDirectory);
+        if (root == null) return 0;
+        int count = apply(root, bindings);
+        Reference.logger.info("Copied " + count + " keybinds from Litematica");
+        return count;
     }
 
     static int apply(JsonObject root, List<Hotkey> bindings) {
@@ -87,7 +78,12 @@ public final class LitematicaKeysImport {
                 Hotkey binding = byId.get(id);
                 List<Integer> codes = codes(keys);
                 if (binding == null || codes == null) continue;
-                try { binding.setKeys(codes); count++; }
+                try {
+                    binding.setKeys(codes);
+                    Hotkey.Settings settings = settingsOf(section.getKey(), entry.getValue(), binding.settings);
+                    if (settings != null) binding.settings = settings;
+                    count++;
+                }
                 catch (IllegalArgumentException error) { Reference.logger.warn("Skipping Litematica keybind " + entry.getKey() + ": " + keys); }
             }
         }
@@ -103,6 +99,27 @@ public final class LitematicaKeysImport {
         else if (!section.equals("Hotkeys")) return null;
         JsonElement keys = object.get("keys");
         return keys != null && keys.isJsonPrimitive() ? keys.getAsString() : null;
+    }
+
+    /** The malilib advanced options of one entry ({"settings": {...}} beside the keys), or null when not stored. */
+    private static Hotkey.Settings settingsOf(String section, JsonElement value, Hotkey.Settings current) {
+        if (!value.isJsonObject()) return null;
+        JsonObject object = value.getAsJsonObject();
+        if (object.has("hotkey") && object.get("hotkey").isJsonObject()) object = object.getAsJsonObject("hotkey");
+        if (!object.has("settings") || !object.get("settings").isJsonObject()) return null;
+        JsonObject stored = object.getAsJsonObject("settings");
+        Hotkey.Settings settings = current.copy();
+        try {
+            if (stored.has("activate_on")) settings.action = Hotkey.Action.valueOf(stored.get("activate_on").getAsString().toUpperCase(Locale.ROOT));
+            if (stored.has("context")) settings.context = Hotkey.Context.valueOf(stored.get("context").getAsString().toUpperCase(Locale.ROOT));
+            if (stored.has("allow_empty")) settings.allowEmpty = stored.get("allow_empty").getAsBoolean();
+            if (stored.has("allow_extra_keys")) settings.allowExtra = stored.get("allow_extra_keys").getAsBoolean();
+            if (stored.has("order_sensitive")) settings.ordered = stored.get("order_sensitive").getAsBoolean();
+            if (stored.has("exclusive")) settings.exclusive = stored.get("exclusive").getAsBoolean();
+            if (stored.has("cancel")) settings.cancel = stored.get("cancel").getAsBoolean();
+            else if (stored.has("cancel_further")) settings.cancel = stored.get("cancel_further").getAsBoolean();
+            return settings;
+        } catch (RuntimeException error) { return null; }
     }
 
     /** Key codes for a malilib key list, or null when a key is unknown (that hotkey keeps its default). */
