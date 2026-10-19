@@ -53,7 +53,7 @@ public class UiTranslationsTest {
                 while (matcher.find()) keys.add(matcher.group(1));
             }
         }
-        keys.removeIf(key -> key.endsWith(".") || key.endsWith(".cfg"));
+        keys.removeIf(key -> key.endsWith(".") || key.endsWith(".cfg") || key.endsWith(".json"));
         keys.removeAll(Arrays.asList("schematica.config", "schematica.gui.material", "litematica.gui.label.area_editor.corner_"));
         return keys;
     }

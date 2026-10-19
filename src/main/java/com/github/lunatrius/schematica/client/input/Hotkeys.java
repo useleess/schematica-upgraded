@@ -113,7 +113,11 @@ public final class Hotkeys {
         IntPredicate scroll, HotkeyHooks.Click click) {
         store = new HotkeyStore(configDirectory.resolve("schematica_plus_hotkeys.json"));
         try {
-            if (!store.load(ALL)) { migrate(gameDirectory.resolve("options.txt")); store.save(ALL); }
+            if (!store.load(ALL)) {
+                migrate(gameDirectory.resolve("options.txt"));
+                LitematicaKeysImport.run(configDirectory, gameDirectory, ALL);
+                store.save(ALL);
+            }
         } catch (IOException error) { Reference.logger.error("Could not load hotkeys; keeping the original configuration file", error); }
         HotkeyHooks.initialize(ALL, action, scroll);
         HotkeyHooks.click(click);
