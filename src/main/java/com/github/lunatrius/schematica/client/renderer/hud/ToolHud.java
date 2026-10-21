@@ -51,7 +51,8 @@ public final class ToolHud {
 
     public static List<String> lines() {
         List<String> lines = new ArrayList<>();
-        boolean hasTool = ToolManager.toolActive();
+        boolean hasTool = ToolManager.toolActive() || com.github.lunatrius.schematica.handler.ConfigurationHandler.toolHudAlwaysVisible
+            && com.github.lunatrius.schematica.handler.VisualSettings.rendering;
         if (hasTool && SchematicProjects.hasProjectOpen()) {
             projectLines(lines);
         } else {

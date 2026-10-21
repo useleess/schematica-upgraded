@@ -73,9 +73,22 @@ public class ClientHandler {
 
     private int printerTicks;
 
+    private boolean useWasDown;
+
+    /** pickBlockAuto while the use key stays down: vanilla repeats the placement, so pick before each repeat. */
+    private void autoPickWhileHeld() {
+        Minecraft mc = Minecraft.getMinecraft();
+        boolean down = mc.player != null && mc.currentScreen == null && mc.gameSettings.keyBindUseItem.isKeyDown();
+        if (down && useWasDown && com.github.lunatrius.schematica.handler.ConfigurationHandler.pickBlockAuto && InputHandler.shouldPickBlock()) InputHandler.INSTANCE.pickBlock(false);
+        useWasDown = down;
+    }
+
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase == TickEvent.Phase.START) com.github.lunatrius.schematica.client.gui.material.MaterialLists.startTick();
+        if (event.phase == TickEvent.Phase.START) {
+            com.github.lunatrius.schematica.client.gui.material.MaterialLists.startTick();
+            autoPickWhileHeld();
+        }
         if (event.phase != TickEvent.Phase.END) return;
         HotkeyHooks.tick();
         com.github.lunatrius.schematica.tool.ToolManager.tick();

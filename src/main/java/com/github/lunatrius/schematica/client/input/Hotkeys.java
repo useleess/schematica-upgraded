@@ -86,10 +86,14 @@ public final class Hotkeys {
         add("schematicVersionCyclePrevious", normal());
         add("workingSwitch", extra());
         add("refreshMaterialList", normal());
+        for (String id : new String[] {"openGuiLoadSchematics", "openGuiSchematicManager", "openSchematicsFolder", "rotatePlacementCW",
+            "rotatePlacementCCW", "duplicatePlacement", "removeSelectedPlacement", "schematicEditAcceptReplacement", "setHeldItemAsTool",
+            "setSchematicPreview", "toolModeCycleForward", "toolModeCycleBackward", "updateBlocks", "pickBlockAutoToggle"}) add(id, normal());
+        add("selectionExpandModifier", modifier());
         for (String id : new String[] {"enableRendering", "enableSchematicRendering", "enableSchematicBlocksRendering",
             "enableSchematicFluidRendering", "enableSchematicOverlay", "enableSchematicOverlayCulling", "enableSchematicEntityHitboxes",
             "enableSchematicFakeLighting", "enableAreaSelectionBoxesRendering", "enablePlacementBoxesRendering", "overlayReducedInnerSides",
-            "renderAOModernEnable", "renderBlocksAsTranslucent", "renderCollidingSchematicBlocks", "renderSchematicEntities",
+            "renderAOModernEnable", "renderBlocksAsTranslucent", "renderCollidingSchematicBlocks", "renderCollidingBlockAtCursor", "renderSchematicEntities",
             "renderSchematicTileEntities", "schematicOverlayEnableOutlines", "schematicOverlayEnableSides", "schematicOverlayModelOutline",
             "schematicOverlayModelSides", "schematicOverlayRenderThroughBlocks", "schematicOverlayTypeDiffBlock", "schematicOverlayTypeExtra",
             "schematicOverlayTypeMissing", "schematicOverlayTypeWrongBlock", "schematicOverlayTypeWrongState"})

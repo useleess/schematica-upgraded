@@ -75,12 +75,16 @@ public final class VerifierBlockInfo {
     public static final class Visual {
         public final String name;
         private ItemStack icon;
+        private net.minecraft.block.state.IBlockState model;
         public Visual(State state) {
             String label = state.block;
             try {
                 Block block = com.github.lunatrius.schematica.world.schematic.BlockStates.block(state.block);
                 if (block != null) {
                     if (!state.air()) icon = new ItemStack(block, 1, block.damageDropped(block.getStateFromMeta(state.metadata)));
+                    // schematicVerifierUseBlockModels, and blocks without an item (or flower pots, to show the plant)
+                    if (!state.air() && (icon.isEmpty() || block instanceof net.minecraft.block.BlockFlowerPot
+                        || com.github.lunatrius.schematica.handler.VisualSettings.verifierBlockModels)) model = block.getStateFromMeta(state.metadata);
                     label = icon == null || icon.isEmpty() ? block.getLocalizedName() : icon.getDisplayName();
                     if (label == null || label.endsWith(".name")) label = state.block;
                 }
@@ -90,9 +94,41 @@ public final class VerifierBlockInfo {
         public void draw(UiDraw draw, int x, int y, int width) {
             if (width < 20) return;
             draw.fill(new UiBounds(x, y + 3, 16, 16), 0x20FFFFFF);
-            if (icon != null) try { draw.item(icon, x, y + 3); }
+            if (model != null) try { blockModel(model, x, y + 3); }
+            catch (RuntimeException error) { model = null; Reference.logger.debug("Could not draw verifier block model", error); }
+            else if (icon != null) try { draw.item(icon, x, y + 3); }
             catch (RuntimeException error) { icon = null; Reference.logger.debug("Could not draw verifier item", error); }
             draw.flatText(draw.trim(name, Math.max(0, width - 24)), x + 20, y + 7, 0xFFFFFFFF);
+        }
+
+        /** A block model drawn in a 16 x 16 GUI cell, turned like an item block icon. */
+        private static void blockModel(net.minecraft.block.state.IBlockState state, int x, int y) {
+            if (state.getRenderType() != net.minecraft.util.EnumBlockRenderType.MODEL) return;
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
+            net.minecraft.client.renderer.GlStateManager.pushMatrix();
+            try {
+                mc.getTextureManager().bindTexture(net.minecraft.client.renderer.texture.TextureMap.LOCATION_BLOCKS_TEXTURE);
+                net.minecraft.client.renderer.GlStateManager.enableTexture2D();
+                net.minecraft.client.renderer.GlStateManager.enableDepth();
+                net.minecraft.client.renderer.GlStateManager.enableBlend();
+                net.minecraft.client.renderer.GlStateManager.blendFunc(net.minecraft.client.renderer.GlStateManager.SourceFactor.SRC_ALPHA,
+                    net.minecraft.client.renderer.GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                net.minecraft.client.renderer.GlStateManager.color(1, 1, 1, 1);
+                net.minecraft.client.renderer.GlStateManager.translate(x + 8, y + 8, 250);
+                net.minecraft.client.renderer.GlStateManager.scale(10, -10, 10);
+                net.minecraft.client.renderer.GlStateManager.rotate(30, 1, 0, 0);
+                net.minecraft.client.renderer.GlStateManager.rotate(225, 0, 1, 0);
+                net.minecraft.client.renderer.GlStateManager.translate(-0.5, -0.5, -0.5);
+                net.minecraft.client.renderer.RenderHelper.enableGUIStandardItemLighting();
+                mc.getBlockRendererDispatcher().renderBlockBrightness(state, 1.0f);
+            } finally {
+                net.minecraft.client.renderer.RenderHelper.disableStandardItemLighting();
+                net.minecraft.client.renderer.GlStateManager.disableDepth();
+                net.minecraft.client.renderer.GlStateManager.disableBlend();
+                net.minecraft.client.renderer.GlStateManager.resetColor();
+                net.minecraft.client.renderer.GlStateManager.color(1, 1, 1, 1);
+                net.minecraft.client.renderer.GlStateManager.popMatrix();
+            }
         }
     }
 }

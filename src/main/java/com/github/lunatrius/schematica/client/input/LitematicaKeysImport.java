@@ -29,6 +29,8 @@ public final class LitematicaKeysImport {
             "easyPlaceActivation", "easyPlaceUseKey", "renderBlockInfoOverlay", "renderInfoOverlay",
             "refreshSchematicRenderer", "rerenderSchematic", "subModeCycle", "selectionModeCycle",
             "invertSchematicRenderState", "invertGhostBlockRenderState", "translucentSchematicRendering", "toggleTranslucentRendering",
+            "openLoadSchematicsScreen", "openGuiLoadSchematics", "openSchematicManagerScreen", "openGuiSchematicManager",
+            "pickBlockAuto", "pickBlockAutoToggle",
             // on/off options that carry a hotkey
             "easyPlaceMode", "easyPlaceToggle", "pickBlock", "pickBlockToggle", "placementRestriction", "togglePlacementRestriction",
             "signTextPaste", "toggleSignTextPaste", "toolItemEnabled", "toolEnabledToggle",

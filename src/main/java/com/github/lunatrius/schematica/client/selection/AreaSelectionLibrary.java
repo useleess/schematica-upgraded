@@ -316,6 +316,21 @@ public final class AreaSelectionLibrary {
         setPoints(area, new Vector3i(first[0], first[1], first[2]), new Vector3i(second[0], second[1], second[2]));
     }
 
+    /** Litematica's expandOrShrinkBox: moves only the box side on the given axis and direction. */
+    public void expandSelected(Area area, int amount, int axis, boolean positiveSide) {
+        require(area); requireBox(area, area.selectedBox);
+        Vector3i a = area.first(), b = area.second();
+        int[] first = {a.x, a.y, a.z}, second = {b.x, b.y, b.z};
+        int change = positiveSide ? amount : -amount;
+        if (first[axis] == second[axis]) {
+            if (amount <= 0) return;
+            if (positiveSide) second[axis] = Math.addExact(second[axis], change);
+            else first[axis] = Math.addExact(first[axis], change);
+        } else if (first[axis] > second[axis] == positiveSide) first[axis] = Math.addExact(first[axis], change);
+        else second[axis] = Math.addExact(second[axis], change);
+        setPoints(area, new Vector3i(first[0], first[1], first[2]), new Vector3i(second[0], second[1], second[2]));
+    }
+
     private void requireBox(Area area, Box box) {
         require(area);
         if (!area.boxes.contains(box)) throw new IllegalArgumentException("Subregion is no longer in this selection");

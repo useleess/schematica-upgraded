@@ -136,7 +136,29 @@ public class ClientProxy extends CommonProxy {
         EntityPlayerSP player = MINECRAFT.player;
         if (placement != null && player != null) {
             placement.moveOriginTo((int) Math.floor(player.posX), (int) Math.floor(player.posY), (int) Math.floor(player.posZ));
+            if (ConfigurationHandler.placementInfrontOfPlayer) moveInFrontOf(placement, player);
         }
+    }
+
+    /** Litematica's placementInfrontOfPlayer: shifts the placement box so it lies fully in front of and beside the player. */
+    static void moveInFrontOf(SchematicWorld placement, EntityPlayer player) {
+        int px = MathHelper.floor(player.posX), pz = MathHelper.floor(player.posZ);
+        int minX = placement.position.x, minZ = placement.position.z;
+        int maxX = minX + placement.getWidth() - 1, maxZ = minZ + placement.getLength() - 1;
+        EnumFacing front = player.getHorizontalFacing();
+        net.minecraft.util.math.Vec3d look = player.getLookVec();
+        EnumFacing side = front.getAxis() == EnumFacing.Axis.Z ? (look.x < 0 ? EnumFacing.WEST : EnumFacing.EAST) : (look.z < 0 ? EnumFacing.NORTH : EnumFacing.SOUTH);
+        int dx = 0, dz = 0;
+        for (EnumFacing facing : new EnumFacing[] {front, side}) {
+            switch (facing) {
+                case EAST: dx += px - minX + 1; break;
+                case WEST: dx += px - maxX - 1; break;
+                case SOUTH: dz += pz - minZ + 1; break;
+                case NORTH: dz += pz - maxZ - 1; break;
+                default: break;
+            }
+        }
+        if (dx != 0 || dz != 0) placement.moveMinimumTo(minX + dx, placement.position.y, minZ + dz);
     }
 
     public static void moveSchematic(SchematicWorld placement, int x, int y, int z) {
@@ -442,6 +464,34 @@ public class ClientProxy extends CommonProxy {
         for (SchematicWorld other : loadedSchematics) if (other != world) names.add(other.name);
         while (names.contains(world.name)) world.name = base + " #" + suffix++;
         com.github.lunatrius.schematica.client.renderer.hud.StatusInfoHud.startOverride();
+        return world;
+    }
+
+    /** A copy of a placement: same source, transforms, sub-regions, position and settings. */
+    public static SchematicWorld duplicatePlacement(SchematicWorld original) throws IOException {
+        SchematicLibrary.Source<SchematicSourceData> source = SCHEMATICS.sourceOf(original);
+        if (source == null) return null;
+        List<String> operations = new ArrayList<>(original.transformOperations);
+        com.google.gson.JsonObject subregions = original.subregions() == null ? null : original.subregions().toJson();
+        SchematicWorld world = SCHEMATICS.create(source, (data, previous) -> {
+            SchematicWorld copy = instantiate(source, data);
+            PlacementState.applyTransforms(copy, operations);
+            copy.restoreSubregions(subregions);
+            copy.position.set(original.position.x, original.position.y, original.position.z);
+            copy.isRendering = original.isRendering;
+            copy.isRenderingEntities = original.isRenderingEntities;
+            copy.isPastingBlockNBT = original.isPastingBlockNBT;
+            copy.setPlacementSettings(PlacementSettings.fromJson(original.placementSettings().toJson()));
+            copy.grid.fromJson(original.grid.toJson());
+            copy.boxColor = original.boxColor;
+            return copy;
+        });
+        Set<String> names = new HashSet<>();
+        for (SchematicWorld other : loadedSchematics) if (other != world) names.add(other.name);
+        String base = original.name;
+        int suffix = 2;
+        world.name = base;
+        while (names.contains(world.name)) world.name = base + " #" + suffix++;
         return world;
     }
 

@@ -104,10 +104,54 @@ public final class MaterialListHud {
         long stacks = count / stack, remainder = count % stack;
         double boxes = (double) count / (27.0 * stack);
         if (count <= stack) return Long.toString(count);
+        if (boxes < 1.0 && !ConfigurationHandler.materialListHudStacks) return Long.toString(count);
         if (boxes >= 1.0) return String.format(Locale.ROOT, "%d (%.2f %s)", count, boxes,
             UiTranslations.format("litematica.gui.label.material_list.abbr.shulker_box"));
         if (remainder > 0) return String.format(Locale.ROOT, "%d (%d x %d + %d)", count, stacks, stack, remainder);
         return String.format(Locale.ROOT, "%d (%d x %d)", count, stacks, stack);
+    }
+
+    /** materialListSlotHighlight: container slots holding items the active material list still misses, colored by what the player has. */
+    public static void highlightMissing(Minecraft mc, GuiContainer gui) {
+        if (!ConfigurationHandler.materialListSlotHighlight) return;
+        MaterialList materials = active(mc);
+        if (materials == null) return;
+        List<Entry<MaterialItemKey>> missing = materials.model().missingOnly();
+        if (missing.isEmpty()) return;
+        int[] origin = guiOrigin(gui);
+        if (origin == null) return;
+        try (MinecraftUiDraw draw = new MinecraftUiDraw(mc)) {
+            GL11.glTranslatef(0, 0, 300);
+            for (Object object : gui.inventorySlots.inventorySlots) {
+                Slot slot = (Slot) object;
+                ItemStack stack = slot.getStack();
+                if (stack == null || stack.isEmpty() || slot.inventory instanceof net.minecraft.entity.player.InventoryPlayer) continue;
+                Entry<MaterialItemKey> entry = null;
+                for (Entry<MaterialItemKey> candidate : missing) {
+                    ItemStack wanted = candidate.key.stack();
+                    if (wanted.getItem() == stack.getItem() && wanted.getItemDamage() == stack.getItemDamage()) { entry = candidate; break; }
+                }
+                if (entry == null) continue;
+                int color = (entry.available == 0 ? RenderColors.SLOT_NONE : entry.available < entry.key.stack().getMaxStackSize()
+                    ? RenderColors.SLOT_UNDER_STACK : RenderColors.SLOT_NOT_ENOUGH).color();
+                UiBounds box = new UiBounds(origin[0] + slot.xPos, origin[1] + slot.yPos, 16, 16);
+                draw.fill(box.inset(1), color);
+                draw.border(box, color | 0xFF000000);
+            }
+        }
+    }
+
+    /** The screen position of a container GUI (its private guiLeft and guiTop), or null. */
+    private static int[] guiOrigin(GuiContainer gui) {
+        try {
+            if (guiLeft == null) {
+                guiLeft = ReflectionHelper.findField(GuiContainer.class, "guiLeft", "field_147003_i");
+                guiTop = ReflectionHelper.findField(GuiContainer.class, "guiTop", "field_147009_r");
+            }
+            return new int[] {guiLeft.getInt(gui), guiTop.getInt(gui)};
+        } catch (ReflectiveOperationException | RuntimeException error) {
+            return null;
+        }
     }
 
     /** highlightBlockInInventory: outlines the slots holding the item of the looked at schematic block. */
@@ -115,17 +159,9 @@ public final class MaterialListHud {
         if (!ConfigurationHandler.highlightBlockInInventory) return;
         MaterialCache.BuildItems items = lookedAtItems(mc);
         if (items == null || items.isEmpty()) return;
-        int left, top;
-        try {
-            if (guiLeft == null) {
-                guiLeft = ReflectionHelper.findField(GuiContainer.class, "guiLeft", "field_147003_i");
-                guiTop = ReflectionHelper.findField(GuiContainer.class, "guiTop", "field_147009_r");
-            }
-            left = guiLeft.getInt(gui);
-            top = guiTop.getInt(gui);
-        } catch (ReflectiveOperationException | RuntimeException error) {
-            return;
-        }
+        int[] origin = guiOrigin(gui);
+        if (origin == null) return;
+        int left = origin[0], top = origin[1];
         int color = RenderColors.INVENTORY.color();
         try (MinecraftUiDraw draw = new MinecraftUiDraw(mc)) {
             GL11.glTranslatef(0, 0, 300);

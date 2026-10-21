@@ -31,6 +31,6 @@ public class ToggleHotkeysTest {
                 assertTrue(language + " " + key.commentKey(), lang.containsKey(key.commentKey()));
             }
         }
-        assertEquals(26, toggles);
+        assertEquals(27, toggles);
     }
 }

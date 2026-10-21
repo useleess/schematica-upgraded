@@ -239,12 +239,27 @@ public final class GuiSchematicVerifier extends UiScreen {
                 ignore.setBounds(bounds().right() - w - 2, bounds().y + 1, w, 20);
             }
         }
+        /** The verifier text color option of a result category, or null for the categories without one. */
+        private com.github.lunatrius.schematica.handler.RenderColors textColor(Type type) {
+            switch (type) {
+                case WRONG_BLOCK: return com.github.lunatrius.schematica.handler.RenderColors.VERIFIER_WRONG_BLOCK_TEXT;
+                case WRONG_STATE: return com.github.lunatrius.schematica.handler.RenderColors.VERIFIER_WRONG_STATE_TEXT;
+                case EXTRA: return com.github.lunatrius.schematica.handler.RenderColors.VERIFIER_EXTRA_TEXT;
+                case MISSING: return com.github.lunatrius.schematica.handler.RenderColors.VERIFIER_MISSING_TEXT;
+                case CORRECT: return com.github.lunatrius.schematica.handler.RenderColors.VERIFIER_CORRECT_TEXT;
+                default: return null;
+            }
+        }
         @Override public void draw(UiDraw draw, int mouseX, int mouseY) {
             boolean selected = row.group == null ? session.markers.selection.category(row.type) : session.markers.selection.entry(row.group);
             draw.fill(bounds(), selected ? 0xA0707070 : containsVisible(mouseX, mouseY) ? 0xA0505050 : index % 2 == 1 ? 0xA0101010 : 0xA0303030);
             if (selected) draw.border(bounds(), 0xFFE0E0E0);
             int x = bounds().x + 4, y = bounds().y;
-            if (row.group == null) draw.text(row.type.color + UiTranslations.format(row.type.key), x, y + 7, 0xFFFFFFFF);
+            if (row.group == null) {
+                com.github.lunatrius.schematica.handler.RenderColors text = textColor(row.type);
+                if (text == null) draw.text(row.type.color + UiTranslations.format(row.type.key), x, y + 7, 0xFFFFFFFF);
+                else draw.text(UiTranslations.format(row.type.key), x, y + 7, text.color() | 0xFF000000);
+            }
             else {
                 visual(row.group.pair.expected).draw(draw, x, y, expectedWidth);
                 if (row.type != Type.CORRECT) visual(row.group.pair.found).draw(draw, x + expectedWidth, y, foundWidth);

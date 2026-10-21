@@ -43,6 +43,15 @@ public final class SchematicPreview {
 
     public void request(File file) { pending = file; }
 
+    private boolean takeNow;
+
+    /** setSchematicPreview: takes the requested preview at the end of this frame; false when none is requested. */
+    public boolean takeNow() {
+        if (pending == null) return false;
+        takeNow = true;
+        return true;
+    }
+
     public boolean cancel() {
         boolean had = pending != null;
         pending = null;
@@ -83,6 +92,7 @@ public final class SchematicPreview {
         boolean down = key > 0 && key < Keyboard.KEYBOARD_SIZE && Keyboard.isKeyDown(key);
         boolean pressed = down && !keyWasDown;
         keyWasDown = down;
+        if (takeNow) { pressed = true; takeNow = false; }
         if (!pressed || pending == null || mc.currentScreen != null || mc.player == null) return;
         File file = pending;
         pending = null;

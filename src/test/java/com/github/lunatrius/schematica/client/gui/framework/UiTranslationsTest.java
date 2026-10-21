@@ -89,7 +89,7 @@ public class UiTranslationsTest {
 
     @Test public void shipsAllUpstreamKeysAndLocalesIncludingNonUiKeys() throws IOException {
         Map<String, String> english = translations("en_US");
-        assertEquals(1644, english.size());
+        assertEquals(1746, english.size());
         assertTrue(english.containsKey("block.litematica.black_glass_fallback"));
         assertTrue(english.containsKey("modmenu.descriptionTranslation.litematica"));
         assertTrue(english.containsKey("tag.block.malilib.all_signs_fix"));
@@ -100,7 +100,7 @@ public class UiTranslationsTest {
                 expected = expected.stream().filter(key -> key.contains("litematica")).collect(Collectors.toSet());
             }
             assertTrue(language, values.keySet().containsAll(expected));
-            assertEquals(language, language.equals("tr_TR") ? 1181 : 1644, values.size());
+            assertEquals(language, language.equals("tr_TR") ? 1283 : 1746, values.size());
             for (String text : values.values()) assertFalse(language, text.contains("\uFFFD"));
         }
     }

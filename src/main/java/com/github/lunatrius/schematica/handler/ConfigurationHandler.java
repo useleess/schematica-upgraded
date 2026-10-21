@@ -111,10 +111,14 @@ public class ConfigurationHandler {
     public static int commandLimitPerTick = 8, commandTaskInterval = 1;
     public static boolean easyPlacePostRewrite, easyPlaceClickAdjacent, pickBlockAvoidDamageable = true, pickBlockAvoidTools;
     public static String pickBlockableSlots = "1,2,3,4,5";
+    /** Litematica's pickBlockAuto, pickBlockIgnoreNBT, pickBlockShulkers, placementInfrontOfPlayer and createPlacementOnLoad. */
+    public static boolean showExtraSchematicTypes, pickBlockAuto, pickBlockIgnoreNBT, pickBlockShulkerBoxes, placementInfrontOfPlayer, createPlacementOnLoad = true;
     public static boolean materialListContainerScan;
     public static boolean missingBlocksPrompt = true;
     public static boolean materialListIgnoreState, materialListRecipeDetails = true, renderMaterialListInGuis = true, highlightBlockInInventory;
     public static int materialListHudMaxLines = 10;
+    /** Litematica's materialListHudStacks, materialListSlotHighlight and toolHudAlwaysVisible. */
+    public static boolean materialListHudStacks = true, materialListSlotHighlight = true, toolHudAlwaysVisible;
     public static double materialListHudScale = 1;
     public static com.github.lunatrius.schematica.tool.PlacementDeletionMode schematicVcsDeleteMode = com.github.lunatrius.schematica.tool.PlacementDeletionMode.MATCHING_BLOCK;
     /** Selection tool: moving a corner selects it; the simple (default) or normal selection mode. */
@@ -441,6 +445,12 @@ public class ConfigurationHandler {
         Property pickSlots = configuration.get(Names.Config.Category.TOOL, "pickBlockableSlots", "1,2,3,4,5");
         pickSlots.setLanguageKey("litematica.config.generic.name.pickBlockableSlots");
         pickBlockableSlots = pickSlots.getString();
+        showExtraSchematicTypes = toolFlag("showExtraSchematicTypes", false);
+        pickBlockAuto = toolFlag("pickBlockAuto", false);
+        pickBlockIgnoreNBT = toolFlag("pickBlockIgnoreNBT", false);
+        pickBlockShulkerBoxes = toolFlag("pickBlockShulkers", false);
+        placementInfrontOfPlayer = toolFlag("placementInfrontOfPlayer", false);
+        createPlacementOnLoad = toolFlag("createPlacementOnLoad", true);
         enableDifferentBlocks = toolFlag("enableDifferentBlocks", false);
         com.github.lunatrius.schematica.util.BlockGroups.enabled = enableDifferentBlocks;
         materialListRecipeDetails = toolFlag("materialListRecipeDetails", true);
@@ -450,6 +460,9 @@ public class ConfigurationHandler {
         hudLines.setLanguageKey("litematica.config.info_overlays.name.materialListHudMaxLines");
         hudLines.setMinValue(1).setMaxValue(128);
         materialListHudMaxLines = Math.max(1, Math.min(128, hudLines.getInt(10)));
+        materialListHudStacks = infoFlag("materialListHudStacks", true);
+        materialListSlotHighlight = infoFlag("materialListSlotHighlight", true);
+        toolHudAlwaysVisible = infoFlag("toolHudAlwaysVisible", false);
         Property hudScale = configuration.get(BlockInfoHudSettings.CATEGORY, "materialListHudScale", 1.0);
         hudScale.setLanguageKey("litematica.config.info_overlays.name.materialListHudScale");
         hudScale.setMinValue(0.1).setMaxValue(4.0);
@@ -627,6 +640,12 @@ public class ConfigurationHandler {
         property.setLanguageKey("litematica.config.generic.name." + name);
         property.setMinValue(min).setMaxValue(max);
         return Math.max(min, Math.min(max, property.getInt(fallback)));
+    }
+
+    private static boolean infoFlag(String name, boolean fallback) {
+        Property property = configuration.get(BlockInfoHudSettings.CATEGORY, name, fallback);
+        property.setLanguageKey("litematica.config.info_overlays.name." + name);
+        return property.getBoolean(fallback);
     }
 
     private static boolean toolFlag(String name, boolean fallback) {

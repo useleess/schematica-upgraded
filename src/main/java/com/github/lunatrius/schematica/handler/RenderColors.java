@@ -18,7 +18,20 @@ public enum RenderColors {
     EXTRA("schematicOverlayColorExtra", 0x4CFF4CE6, true),
     MISSING("schematicOverlayColorMissing", 0x2C33B3E6, true),
     WRONG_BLOCK("schematicOverlayColorWrongBlock", 0x4CFF3333, true),
-    WRONG_STATE("schematicOverlayColorWrongState", 0x4CFF9010, true);
+    WRONG_STATE("schematicOverlayColorWrongState", 0x4CFF9010, true),
+    SLOT_UNDER_STACK("materialListSlotHighlightUnderStack", 0x80FF40D0, true),
+    SLOT_NONE("materialListSlotHighlightNone", 0x80FF2000, true),
+    SLOT_NOT_ENOUGH("materialListSlotHighlightNotEnough", 0x80FFE040, true),
+    VERIFIER_CORRECT("verifierCorrect", 0x4C11FF11, true),
+    VERIFIER_EXTRA("verifierExtra", 0x4CFF00CF, true),
+    VERIFIER_MISSING("verifierMissing", 0x4C00FFFF, true),
+    VERIFIER_WRONG_BLOCK("verifierWrongBlock", 0x4CFF0000, true),
+    VERIFIER_WRONG_STATE("verifierWrongState", 0x4CFFAF00, true),
+    VERIFIER_CORRECT_TEXT("verifierCorrectText", 0xFF55FF55, true),
+    VERIFIER_EXTRA_TEXT("verifierExtraText", 0xFFFF55FF, true),
+    VERIFIER_MISSING_TEXT("verifierMissingText", 0xFF55FFFF, true),
+    VERIFIER_WRONG_BLOCK_TEXT("verifierWrongBlockText", 0xFFFF5555, true),
+    VERIFIER_WRONG_STATE_TEXT("verifierWrongStateText", 0xFFFFAA00, true);
 
     public static final String CATEGORY = "colors";
     public final String key;

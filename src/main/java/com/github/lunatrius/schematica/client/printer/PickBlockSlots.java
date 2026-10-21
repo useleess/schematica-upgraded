@@ -88,6 +88,20 @@ public final class PickBlockSlots {
         return -1;
     }
 
+    /** pickBlockShulkers: the inventory index of a Shulker Box holding the item, or -1. */
+    static int shulkerWith(InventoryPlayer inventory, ItemStack stack) {
+        for (int i = 0; i < inventory.mainInventory.size(); i++) {
+            ItemStack box = inventory.mainInventory.get(i);
+            if (!(net.minecraft.block.Block.getBlockFromItem(box.getItem()) instanceof net.minecraft.block.BlockShulkerBox)) continue;
+            net.minecraft.nbt.NBTTagCompound tag = box.getSubCompound("BlockEntityTag");
+            if (tag == null || !tag.hasKey("Items", 9)) continue;
+            net.minecraft.util.NonNullList<ItemStack> items = net.minecraft.util.NonNullList.withSize(27, ItemStack.EMPTY);
+            net.minecraft.inventory.ItemStackHelper.loadAllItems(tag, items);
+            for (ItemStack item : items) if (!item.isEmpty() && item.isItemEqual(stack)) return i;
+        }
+        return -1;
+    }
+
     /** The slot of a container that shows the inventory index, or -1. */
     static int containerSlot(Container container, IInventory inventory, int index) {
         for (int i = 0; i < container.inventorySlots.size(); i++) {
@@ -115,7 +129,8 @@ public final class PickBlockSlots {
         if (player == null || stack.isEmpty()) return false;
         InventoryPlayer inventory = player.inventory;
         boolean creative = mc.playerController.isInCreativeMode();
-        int source = find(inventory, stack, matchNbt);
+        int source = find(inventory, stack, matchNbt && !ConfigurationHandler.pickBlockIgnoreNBT);
+        if (source < 0 && !creative && ConfigurationHandler.pickBlockShulkerBoxes) source = shulkerWith(inventory, stack);
         if (source >= 0 && source < 9) {
             inventory.currentItem = source;
             return true;

@@ -66,7 +66,8 @@ public final class SchematicRebuild {
     public static boolean click(boolean attack) {
         if (ToolManager.getCurrentMode() != ToolMode.REBUILD) {
             if (attack) return false;
-            if (Hotkeys.boundOnlyTo("pickBlockLast", mc().gameSettings.keyBindUseItem.getKeyCode())) {
+            if (Hotkeys.boundOnlyTo("pickBlockLast", mc().gameSettings.keyBindUseItem.getKeyCode())
+                || com.github.lunatrius.schematica.handler.ConfigurationHandler.pickBlockAuto) {
                 com.github.lunatrius.schematica.handler.client.InputHandler.INSTANCE.pickBlock(false);
             }
             return com.github.lunatrius.schematica.handler.ConfigurationHandler.placementRestriction
@@ -150,6 +151,32 @@ public final class SchematicRebuild {
         if (start == null) return false;
         apply(start.source, single(start.cell, untransformed(placed, start.operations())));
         return true;
+    }
+
+    /** schematicEditAcceptReplacement: Replace All with the real-world block at the targeted position as the new block. */
+    public static boolean acceptReplacement() {
+        if (mc().world == null || ClientProxy.loadedSchematics.isEmpty()) return false;
+        net.minecraft.util.math.RayTraceResult hit = ToolManager.trace(5);
+        if (hit == null || hit.typeOfHit != net.minecraft.util.math.RayTraceResult.Type.BLOCK) return false;
+        net.minecraft.util.math.BlockPos pos = hit.getBlockPos();
+        Owner owner = owner(ClientProxy.schematic, pos.getX(), pos.getY(), pos.getZ());
+        if (owner == null) return false;
+        CellState original = composed(owner.world, pos.getX(), pos.getY(), pos.getZ());
+        IBlockState client = mc().world.getBlockState(pos).getActualState(mc().world, pos);
+        if (original.state == client) return false;
+        CellState replacement = CellState.of(client);
+        try {
+            boolean started = bulk(owner, rule -> {
+                CellState from = untransformed(original, rule.operations), to = untransformed(replacement, rule.operations);
+                return state -> state == from.state ? to : null;
+            });
+            if (started) message(TextFormatting.GREEN, "litematica.message.schematic_rebuild.accepted_replacement");
+            return started;
+        } catch (IOException error) {
+            Reference.logger.error("Could not edit the schematic source", error);
+            message(TextFormatting.RED, "schematica.message.rebuild.failed");
+            return false;
+        }
     }
 
     /** Copies differing real-world blocks inside the current area selection into the schematic(s) shown there. */

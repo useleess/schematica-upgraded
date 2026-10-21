@@ -50,6 +50,8 @@ public class OverlayHandler {
         }
         if (this.minecraft.world == null || !com.github.lunatrius.schematica.handler.VisualSettings.rendering) return;
         if (gui instanceof net.minecraft.client.gui.inventory.GuiContainer) {
+            com.github.lunatrius.schematica.client.renderer.hud.MaterialListHud.highlightMissing(this.minecraft,
+                (net.minecraft.client.gui.inventory.GuiContainer) gui);
             com.github.lunatrius.schematica.client.renderer.hud.MaterialListHud.highlightInventory(this.minecraft,
                 (net.minecraft.client.gui.inventory.GuiContainer) gui);
         }

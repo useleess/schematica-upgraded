@@ -194,7 +194,9 @@ public final class GuiSchematicSave extends GuiSchematicBrowser {
         @Override
         protected void createWidgets() {
             formatButton = root.add(new UiButton(() -> format, button -> {
-                java.util.List<String> formats = java.util.Arrays.asList(SchematicSaveTarget.FORMATS);
+                java.util.List<String> formats = new java.util.ArrayList<>(java.util.Arrays.asList(SchematicSaveTarget.FORMATS));
+                // showExtraSchematicTypes: the uncommon .schemplus target is hidden unless enabled (or already chosen)
+                if (!ConfigurationHandler.showExtraSchematicTypes && !".schemplus".equals(format)) formats.remove(".schemplus");
                 format = formats.get(Math.floorMod(formats.indexOf(format) + (button == 0 ? 1 : -1), formats.size()));
             }));
             formatButton.setTooltip(UiTranslations.format("schematica.ui.save.format_hint"));

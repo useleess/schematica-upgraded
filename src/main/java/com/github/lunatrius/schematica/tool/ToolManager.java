@@ -113,6 +113,18 @@ public final class ToolManager {
         if (!toolActive() || mc().player == null) return false;
         int amount = wheel > 0 ? 1 : -1;
         Area area = AreaSelections.library().selected();
+        if (Hotkeys.held("selectionExpandModifier") && currentMode.getUsesAreaSelection()) {
+            if (area == null) message("litematica.message.error.no_area_selected");
+            else if (area.selectedBox() == null) message("litematica.error.area_selection.grow.no_sub_region_selected");
+            else {
+                Vector3i side = direction(1);
+                int axis = side.x != 0 ? 0 : side.y != 0 ? 1 : 2;
+                AreaSelections.capture();
+                AreaSelections.library().expandSelected(area, amount, axis, side.x + side.y + side.z > 0);
+                saveArea();
+            }
+            return true;
+        }
         if (Hotkeys.held("selectionGrabModifier") && currentMode.getUsesAreaSelection()) {
             if (grabbed != null) { grabDistance = Math.max(0, grabDistance + amount); tick(); return true; }
             if (area != null && area.originSelected()) { moveEntire(area, direction(amount)); return true; }

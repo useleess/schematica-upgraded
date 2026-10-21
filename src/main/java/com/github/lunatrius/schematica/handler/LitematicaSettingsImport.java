@@ -28,7 +28,8 @@ public final class LitematicaSettingsImport {
             "easyPlaceHold", "easyPlaceHoldEnabled", "generateLowerCaseNames", "generateLowercaseNames",
             "materialListIgnoreBlockState", "materialListIgnoreState", "materialListFromContainer", "materialListContainerScan",
             "pasteCommandInterval", "commandTaskInterval", "pasteCommandLimit", "commandLimitPerTick", "pickBlock", "pickBlockEnabled",
-            "defaultAreaSelectionMode", "defaultSelectionMode",
+            "defaultAreaSelectionMode", "defaultSelectionMode", "pickBlockShulkerBoxes", "pickBlockShulkers",
+            "showHelpfulReminders", "warnDisabledRendering",
             // InfoOverlays
             "blockInfoLines", "blockInfoLinesEnabled", "blockInfoOverlay", "blockInfoOverlayEnabled", "verifierOverlay", "verifierOverlayEnabled",
             "verifierErrorHighlightAlpha", "verifierErrorHilightAlpha", "verifierErrorHighlightMaxPositions", "verifierErrorHilightMaxPositions",
@@ -39,7 +40,7 @@ public final class LitematicaSettingsImport {
             "schematicOverlayRenderThrough", "schematicOverlayRenderThroughBlocks", "schematicOverlayTypeExtra", "highlightAir",
             "placementBoundingBoxRendering", "enablePlacementBoxesRendering", "schematicOverlayOutlines", "drawLines",
             "schematicOverlaySides", "drawQuads", "verifierHighlightConnections", "renderErrorMarkerConnections",
-            "verifierHighlightSides", "renderErrorMarkerSides",
+            "verifierHighlightSides", "renderErrorMarkerSides", "translucentBlockInnerSides", "renderTranslucentBlockInnerSides",
             "schematicOverlayEnableOutlines", "drawLines", "schematicOverlayEnableSides", "drawQuads",
             "enableSchematicOverlay", "highlight", "renderBlocksAsTranslucent", "alphaEnabled", "ghostBlockAlpha", "alpha",
             // Colors

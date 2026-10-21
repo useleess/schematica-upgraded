@@ -509,7 +509,13 @@ public class RendererSchematicChunk {
                 boolean realAir = worldAir(world, real, worldPos);
                 if (!realAir && !(VisualSettings.renderColliding && BlockCompare.compare(state, real) != BlockCompare.Result.SAME)) return false;
             }
-            dispatcher.renderBlock(state, new BlockPos(x, y, z), this.schematic, buffer);
+            BlockPos pos = new BlockPos(x, y, z);
+            if (VisualSettings.translucentInnerSides && ConfigurationHandler.enableAlpha && state.getRenderType() == EnumBlockRenderType.MODEL) {
+                // translucentBlockInnerSides: every model face, also those hidden by the neighbouring schematic blocks
+                IBlockState actual = state.getActualState(this.schematic, pos);
+                dispatcher.getBlockModelRenderer().renderModel(this.schematic, dispatcher.getModelForState(actual),
+                    actual.getBlock().getExtendedState(actual, this.schematic, pos), pos, buffer, false);
+            } else dispatcher.renderBlock(state, pos, this.schematic, buffer);
             return true;
         } catch (Exception e) {
             Reference.logger.error("Failed to render block!", e);

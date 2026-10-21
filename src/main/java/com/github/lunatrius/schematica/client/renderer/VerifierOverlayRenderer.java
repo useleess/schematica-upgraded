@@ -95,8 +95,9 @@ public final class VerifierOverlayRenderer {
 
     private static int[] tint(Marker marker, double alpha) {
         Type type = marker.group.type;
-        int color = (type == Type.WRONG_BLOCK ? RenderColors.WRONG_BLOCK : type == Type.WRONG_STATE ? RenderColors.WRONG_STATE
-            : type == Type.DIFF_BLOCK ? RenderColors.DIFFERENT_TYPE : type == Type.EXTRA ? RenderColors.EXTRA : RenderColors.MISSING).color();
+        int color = (type == Type.WRONG_BLOCK ? RenderColors.VERIFIER_WRONG_BLOCK : type == Type.WRONG_STATE ? RenderColors.VERIFIER_WRONG_STATE
+            : type == Type.DIFF_BLOCK ? RenderColors.DIFFERENT_TYPE : type == Type.EXTRA ? RenderColors.VERIFIER_EXTRA
+            : type == Type.CORRECT ? RenderColors.VERIFIER_CORRECT : RenderColors.VERIFIER_MISSING).color();
         return new int[] {color >>> 16 & 255, color >>> 8 & 255, color & 255, (int) (alpha * 255)};
     }
 }

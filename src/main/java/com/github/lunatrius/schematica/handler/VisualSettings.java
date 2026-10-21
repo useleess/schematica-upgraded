@@ -16,6 +16,8 @@ public final class VisualSettings {
     public static boolean renderEntities = true, renderTileEntities = true, fluids = true, fakeLighting = true, aoModern, renderColliding;
     public static boolean ignoreExistingFluids, modelOutline = true, modelSides = true, reducedInnerSides, overlayCulling = true, entityHitboxes = true;
     public static boolean ignoreCropAge, ignoreSurvivalStates;
+    /** Litematica's renderCollidingBlockAtCursor, translucentBlockInnerSides and schematicVerifierUseBlockModels. */
+    public static boolean collidingAtCursor, translucentInnerSides, verifierBlockModels;
     public static boolean areaBoxSides = true, placementBoxSides, enclosingBox = true, enclosingBoxSides;
     public static int fakeLightLevel = 15;
     public static double placementBoxSideAlpha = 0.2;
@@ -42,6 +44,7 @@ public final class VisualSettings {
         REDUCED_INNER_SIDES(Names.Config.Category.RENDER, "overlayReducedInnerSides", "visuals"),
         AO_MODERN(Names.Config.Category.RENDER, "renderAOModernEnable", "visuals"),
         COLLIDING(Names.Config.Category.RENDER, "renderCollidingSchematicBlocks", "visuals"),
+        COLLIDING_AT_CURSOR(Names.Config.Category.RENDER, "renderCollidingBlockAtCursor", "visuals"),
         ENTITIES(Names.Config.Category.RENDER, "renderSchematicEntities", "visuals"),
         TILE_ENTITIES(Names.Config.Category.RENDER, "renderSchematicTileEntities", "visuals"),
         MODEL_OUTLINE(Names.Config.Category.RENDER, "schematicOverlayModelOutline", "visuals"),
@@ -96,6 +99,9 @@ public final class VisualSettings {
         fakeLighting = flag(config, r, "enableSchematicFakeLighting", true, "visuals");
         aoModern = flag(config, r, "renderAOModernEnable", false, "visuals");
         renderColliding = flag(config, r, "renderCollidingSchematicBlocks", false, "visuals");
+        collidingAtCursor = flag(config, r, "renderCollidingBlockAtCursor", false, "visuals");
+        translucentInnerSides = flag(config, r, "renderTranslucentBlockInnerSides", false, "visuals");
+        verifierBlockModels = flag(config, r, "schematicVerifierUseBlockModels", false, "visuals");
         ignoreExistingFluids = flag(config, r, "ignoreExistingFluids", false, "visuals");
         ignoreCropAge = flag(config, r, "ignoreCropAge", false, "visuals");
         Property survival = config.get(r, "ignoreSurvivalStates", false);

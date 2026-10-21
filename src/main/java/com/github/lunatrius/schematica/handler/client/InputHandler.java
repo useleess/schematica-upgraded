@@ -57,6 +57,30 @@ public class InputHandler {
             case "openGuiSchematicPlacements":
                 minecraft.displayGuiScreen(new com.github.lunatrius.schematica.client.gui.placement.GuiSchematicPlacementsList(parent));
                 break;
+            case "openGuiLoadSchematics":
+                minecraft.displayGuiScreen(new com.github.lunatrius.schematica.client.gui.load.GuiSchematicLoad(parent));
+                break;
+            case "openGuiSchematicManager":
+                minecraft.displayGuiScreen(new com.github.lunatrius.schematica.client.gui.browser.GuiSchematicManager(parent));
+                break;
+            case "openSchematicsFolder":
+                if (!com.github.lunatrius.schematica.handler.ConfigurationHandler.schematicDirectory.isDirectory()) com.github.lunatrius.schematica.handler.ConfigurationHandler.schematicDirectory.mkdirs();
+                com.github.lunatrius.schematica.client.util.FolderOpener.open(com.github.lunatrius.schematica.handler.ConfigurationHandler.schematicDirectory);
+                break;
+            case "rotatePlacementCW": return com.github.lunatrius.schematica.tool.PlacementActions.rotate();
+            case "rotatePlacementCCW": return com.github.lunatrius.schematica.tool.PlacementActions.rotateCounterClockwise();
+            case "duplicatePlacement": return com.github.lunatrius.schematica.tool.PlacementActions.duplicate();
+            case "removeSelectedPlacement":
+                if (placement == null) return false;
+                ClientProxy.removePlacement(placement);
+                break;
+            case "schematicEditAcceptReplacement": return com.github.lunatrius.schematica.tool.SchematicRebuild.acceptReplacement();
+            case "setHeldItemAsTool": return com.github.lunatrius.schematica.tool.PlacementActions.setHeldItemAsTool();
+            case "setSchematicPreview": return com.github.lunatrius.schematica.client.gui.browser.SchematicPreview.INSTANCE.takeNow();
+            case "toolModeCycleForward": com.github.lunatrius.schematica.tool.ToolManager.cycleMode(true); break;
+            case "toolModeCycleBackward": com.github.lunatrius.schematica.tool.ToolManager.cycleMode(false); break;
+            case "updateBlocks": return com.github.lunatrius.schematica.tool.PlacementActions.updateBlocks();
+            case "pickBlockAutoToggle": com.github.lunatrius.schematica.tool.ToolManager.toggleConfig("pickBlockAuto", true); break;
             case "openGuiPlacementSettings":
                 if (placement != null) minecraft.displayGuiScreen(new com.github.lunatrius.schematica.client.gui.placement.GuiPlacementConfiguration(parent, placement));
                 break;

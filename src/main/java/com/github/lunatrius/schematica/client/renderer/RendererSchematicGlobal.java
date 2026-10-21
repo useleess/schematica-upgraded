@@ -119,6 +119,7 @@ public class RendererSchematicGlobal {
                 com.github.lunatrius.schematica.client.printer.PrinterHighlights.render(this.cameraPosition.x, this.cameraPosition.y, this.cameraPosition.z);
                 com.github.lunatrius.schematica.client.printer.NextBlockHint.render(this.cameraPosition.x, this.cameraPosition.y, this.cameraPosition.z);
                 VerifierOverlayRenderer.render(this.minecraft, partialTicks, this.cameraPosition.x, this.cameraPosition.y, this.cameraPosition.z);
+                CursorBlockRenderer.render(this.minecraft, this.cameraPosition.x, this.cameraPosition.y, this.cameraPosition.z);
             } catch (Throwable error) {
                 renderFailed(error, matrixDepth);
             } finally {
