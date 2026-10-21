@@ -1,8 +1,3 @@
 # Unreleased changes
 
 Collected here until the next release, then used as the GitHub / Modrinth notes.
-
-
-- **Keeps your Litematica setup:** on the first start, Schematica upgraded copies your keybinds (including their advanced options) and every Litematica setting it also has - render toggles, overlay colors, HUD positions and sizes, easy place, pick block, tool item, paste options and a custom schematic folder - from an installed Litematica (`liteconfig/common/litematica.json` or `config/litematica.json`). This happens only once; after that, change things in the Schematica upgraded settings.
-- **New keybinds from Litematica:** open the Load Schematics screen, open the Schematic Manager, open the schematics folder, rotate the placement clockwise / counter-clockwise, duplicate the placement, remove the selected placement, accept a replacement (Replace All with the block you're looking at), selection expand modifier (scroll to move one side of a box), set the held item as the tool, set the schematic preview, cycle the tool mode forward / backward, update blocks in the selection (single player creative) and a toggle for Pick Block Auto. All unbound by default; Litematica keys are copied over on the first start.
-- **New settings from Litematica:** Pick Block Auto (also while holding right-click), Pick Block Ignore NBT, Pick Block Shulker Boxes, Placements In Front Of Player, Create Placement On Load, Show Extra Schematic Types, Render Colliding Block At Cursor (with a toggle keybind), Translucent Block Inner Sides, Verifier Uses Block Models, Material List HUD Stacks, Material List Slot Highlight (+3 colors), Tool HUD Always Visible, and verifier marker and text colors.
