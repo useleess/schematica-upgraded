@@ -378,6 +378,15 @@ public abstract class GuiSchematicBrowser extends UiScreen {
             goUp();
             return true;
         }
+        // Typing a character outside a text field opens the search and types it there, as in Litematica
+        if (!(input.focused() instanceof UiTextField) && character > ' ' && net.minecraft.util.ChatAllowedCharacters.isAllowedCharacter(character)
+            && !isCtrlKeyDown()) {
+            if (!searching) {
+                searching = true;
+                layoutWidgets();
+            }
+            input.focus(search);
+        }
         return false;
     }
 

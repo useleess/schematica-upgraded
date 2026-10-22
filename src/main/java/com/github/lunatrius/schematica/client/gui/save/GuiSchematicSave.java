@@ -31,7 +31,7 @@ import com.github.lunatrius.schematica.world.schematic.SchematicFormat;
 
 public final class GuiSchematicSave extends GuiSchematicBrowser {
 
-    private String format = ConfigurationHandler.useSchematicplusFormat ? ".schemplus" : ".schematic";
+    private String format = ConfigurationHandler.useSchematicplusFormat ? ".schemplus" : ".litematic";
     private final String initialName;
     private final AreaSelectionLibrary library = AreaSelections.library();
     private final Area area = library.selected();
