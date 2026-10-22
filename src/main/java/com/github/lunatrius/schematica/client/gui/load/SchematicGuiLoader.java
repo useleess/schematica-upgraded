@@ -6,10 +6,7 @@ import java.io.File;
 import java.io.IOException;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
 
 import com.github.lunatrius.schematica.SchematicaPlus;
 import com.github.lunatrius.schematica.client.world.SchematicWorld;
@@ -59,10 +56,9 @@ public final class SchematicGuiLoader {
         SchematicWorld schematic = ClientProxy.createPlacement(source);
         try {
             Coordinates coord = restoreCoordinates ? ClientProxy.getCoordinates(worldServerName(minecraft), schematic.name) : null;
-            if (!restoreCoordinates) {
+            if (!restoreCoordinates || coord == null) {
+                // A new placement starts with its origin on the player, as in Litematica
                 ClientProxy.moveSchematicToPlayer(schematic);
-            } else if (coord == null) {
-                moveToLookTarget(minecraft, schematic);
             } else {
                 EnumFacing.Axis[] axes = {EnumFacing.Axis.X, EnumFacing.Axis.Y, EnumFacing.Axis.Z};
                 int[] rotations = {coord.rotX, coord.rotY, coord.rotZ};
@@ -85,19 +81,6 @@ public final class SchematicGuiLoader {
             if (previous != null && ClientProxy.loadedSchematics.contains(previous)) ClientProxy.selectSchematic(previous);
             WorldHandler.INSTANCE.saveSession();
             throw e;
-        }
-    }
-
-    private static void moveToLookTarget(Minecraft minecraft, SchematicWorld schematic) {
-        EntityPlayer player = minecraft.player;
-        Vec3d eye = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
-        Vec3d look = player.getLookVec();
-        Vec3d end = eye.addVector(look.x * 256, look.y * 256, look.z * 256);
-        RayTraceResult target = player.world.rayTraceBlocks(eye, end);
-        if (target != null && target.typeOfHit == RayTraceResult.Type.BLOCK) {
-            schematic.moveOriginTo(target.getBlockPos().getX(), target.getBlockPos().getY() + 1, target.getBlockPos().getZ());
-        } else {
-            ClientProxy.moveSchematicToPlayer(schematic);
         }
     }
 }
