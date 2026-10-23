@@ -100,6 +100,12 @@ public final class MissingBlockGuesses {
         return name.equals(AIR) || name.startsWith("!") || LegacyBlockStates.hasModern(name) || alias(name) != null;
     }
 
+    /** Whether the table or its rules know a block of this name (unlike {@link #guess}, which falls back to stone or air). */
+    static boolean resolvable(String name) {
+        load();
+        return find(full(name), 0, new HashSet<>()) != null;
+    }
+
     /** The closest 1.12 block of a block name 1.12 does not have; never null. */
     public static String guess(String name) {
         load();

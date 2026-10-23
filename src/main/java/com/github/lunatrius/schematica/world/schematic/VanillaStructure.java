@@ -73,7 +73,7 @@ public final class VanillaStructure extends SchematicFormat {
                 tile.setInteger("y", pos[1]);
                 tile.setInteger("z", pos[2]);
                 try {
-                    TileEntity entity = NBTHelper.readTileEntityFromCompound(LegacyNbt.tileTo112(tile));
+                    TileEntity entity = NBTHelper.readTileEntityFromCompound(ModernNbt.tile(tile, legacy, blockState));
                     if (entity != null) schematic.setTileEntity(entity.getPos(), entity);
                 } catch (Exception e) {
                     Reference.logger.debug("Skipped a structure block entity at {} {} {}", pos[0], pos[1], pos[2], e);
@@ -88,7 +88,8 @@ public final class VanillaStructure extends SchematicFormat {
             if (pos.tagCount() != 3) continue;
             entity.setTag("Pos", pos.copy());
             try {
-                Entity created = SchematicLitematica.createEntity(LegacyNbt.entityTo112(entity));
+                NBTTagCompound converted = ModernNbt.entity(entity, legacy);
+                Entity created = converted == null ? null : SchematicLitematica.createEntity(converted);
                 if (created != null) schematic.addEntity(created);
             } catch (Exception e) {
                 Reference.logger.debug("Skipped a structure entity", e);

@@ -37,6 +37,12 @@ public final class ImportReport {
         if (report != null && !report.containsKey(name)) report.put(name, replacement);
     }
 
+    /** Whether the decode running on this thread met name as a block this game does not have. */
+    static boolean reportedMissing(String name) {
+        Map<String, String> report = CURRENT.get();
+        return report != null && report.containsKey(name);
+    }
+
     /** Counts blocks of the file that stand in for name, a block this game does not have. */
     public static void missingBlocks(String name, long count) {
         Map<String, Long> counts = COUNTS.get();

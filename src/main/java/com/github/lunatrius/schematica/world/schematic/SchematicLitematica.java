@@ -123,7 +123,8 @@ public class SchematicLitematica extends SchematicFormat {
             try {
                 NBTTagCompound teTag = tileEntitiesList.getCompoundTagAt(i);
                 if (!teTag.hasKey("x") || !teTag.hasKey("y") || !teTag.hasKey("z")) continue;
-                TileEntity te = NBTHelper.readTileEntityFromCompound(LegacyNbt.tileTo112(teTag));
+                IBlockState placed = schematic.getBlockState(teTag.getInteger("x"), teTag.getInteger("y"), teTag.getInteger("z"));
+                TileEntity te = NBTHelper.readTileEntityFromCompound(ModernNbt.tile(teTag, legacy, placed));
                 if (te != null) {
                     schematic.setTileEntity(te.getPos(), te);
                     teLoaded++;
@@ -140,7 +141,8 @@ public class SchematicLitematica extends SchematicFormat {
         int entLoaded = 0, entSkipped = rd.invalidEntities;
         for (int i = 0; i < entitiesList.tagCount(); i++) {
             try {
-                Entity entity = createEntity(LegacyNbt.entityTo112(entitiesList.getCompoundTagAt(i)));
+                NBTTagCompound converted = ModernNbt.entity(entitiesList.getCompoundTagAt(i), legacy);
+                Entity entity = converted == null ? null : createEntity(converted);
                 if (entity != null) {
                     schematic.addEntity(entity);
                     entLoaded++;
