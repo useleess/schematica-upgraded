@@ -58,6 +58,12 @@ public class SchematicFormatsTest {
         }
     }
 
+    /** Issue #2: saving keeps entities unless the player ticks "Ignore entities". */
+    @Test
+    public void entitiesAreSavedByDefault() {
+        org.junit.Assert.assertTrue(SchematicFormat.saveEntities);
+    }
+
     @Test
     public void paletteStoresAndReturnsStates() {
         Schematic schematic = sample();

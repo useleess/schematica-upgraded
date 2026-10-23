@@ -20,8 +20,8 @@ public abstract class SchematicFormat {
 
     /** When true, tile entity NBT data will be included in saved schematics. On by default. */
     public static boolean saveNBT = true;
-    /** When true, entities will be included in saved schematics. Off by default. */
-    public static boolean saveEntities = false;
+    /** When true, entities will be included in saved schematics. On by default ("Ignore entities" unticked, #2). */
+    public static boolean saveEntities = true;
 
     public abstract ISchematic readFromNBT(NBTTagCompound tagCompound);
 
