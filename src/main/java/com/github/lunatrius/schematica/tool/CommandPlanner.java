@@ -40,6 +40,8 @@ public final class CommandPlanner {
         public boolean dataDropped;
         /** A summon: counts as one pasted entity. */
         public boolean entity;
+        /** Sent once every block is placed, with the summons (container contents that needed their own commands). */
+        public boolean late;
 
         Command(String text, IBlockState state, int x1, int y1, int z1, int x2, int y2, int z2, int changes, boolean verify) {
             this.text = text; this.state = state;
@@ -156,11 +158,24 @@ public final class CommandPlanner {
     private static List<Command> withTiles(WorldEditJob job, List<Command> commands, List<int[]> tiled, int phase) {
         for (int[] cell : tiled) {
             IBlockState state = job.target(cell[3]);
-            String text = job.blockCommand(cell[0], cell[1], cell[2], state, job.tileTag(cell[3]));
+            net.minecraft.nbt.NBTTagCompound tile = job.tileTag(cell[3]);
+            String text = job.blockCommand(cell[0], cell[1], cell[2], state, tile);
+            List<String> items = java.util.Collections.emptyList();
+            if (text == null && tile.hasKey("Items", 9)) {
+                // Too full for one command: placed empty, then one replaceitem per stack once the build stands
+                text = job.emptiedBlockCommand(cell[0], cell[1], cell[2], state, tile);
+                items = job.itemCommands(cell[0], cell[1], cell[2], tile);
+            }
             Command command = new Command(text != null ? text : job.blockCommand(cell[0], cell[1], cell[2], state), state,
                 cell[0], cell[1], cell[2], cell[0], cell[1], cell[2], 1, phase < 2);
             command.dataDropped = text == null;
             commands.add(command);
+            for (String item : items) {
+                Command fill = Command.other(item, cell[0], cell[2]);
+                fill.late = true;
+                fill.dataDropped = item == null;
+                commands.add(fill);
+            }
         }
         return commands;
     }
@@ -172,10 +187,10 @@ public final class CommandPlanner {
             net.minecraft.nbt.NBTTagList pos = entity.getTagList("Pos", 6);
             if (pos.tagCount() != 3) continue;
             int x = (int) Math.floor(pos.getDoubleAt(0) + job.x), z = (int) Math.floor(pos.getDoubleAt(2) + job.z);
-            String text = job.summonCommand(entity);
+            String text = job.summonCommand(entity, true);
             Command command = Command.other(text, x, z);
             command.entity = true;
-            command.dataDropped = text == null;
+            command.dataDropped = text == null || !text.equals(job.summonCommand(entity));
             commands.add(command);
         }
         return commands;

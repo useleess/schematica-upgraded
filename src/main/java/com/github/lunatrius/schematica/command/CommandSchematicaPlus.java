@@ -36,7 +36,7 @@ public class CommandSchematicaPlus extends CommandBase {
 
     private static final FileFilterSchematic FILES = new FileFilterSchematic(false);
     private static final List<String> SUBCOMMANDS = Arrays.asList("load", "unload", "list", "here", "move", "rotate", "mirror", "layer",
-        "show", "entities", "alpha", "select", "info");
+        "show", "entities", "alpha", "select", "info", "paste");
 
     @Override
     public String getName() {
@@ -45,7 +45,7 @@ public class CommandSchematicaPlus extends CommandBase {
 
     @Override
     public String getUsage(ICommandSender sender) {
-        return "/splus <load <file>|unload|list|here|move <x> <y> <z>|rotate <x|y|z>|mirror <x|y|z>|layer <on|off|n>|show|entities|alpha <0-1>|select|info>";
+        return "/splus <load <file>|unload|list|here|move <x> <y> <z>|rotate <x|y|z>|mirror <x|y|z>|layer <on|off|n>|show|entities|alpha <0-1>|select|info|paste>";
     }
 
     @Override
@@ -205,6 +205,12 @@ public class CommandSchematicaPlus extends CommandBase {
                 }
                 break;
             }
+            case "paste":
+                if (!com.github.lunatrius.schematica.tool.ToolHandler.paste(net.minecraft.client.Minecraft.getMinecraft().player, current(), null)) {
+                    throw new CommandException("Paste refused");
+                }
+                say(sender, "Pasting " + current().name);
+                break;
             default:
                 throw new WrongUsageException(getUsage(sender));
         }

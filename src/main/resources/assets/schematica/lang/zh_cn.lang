@@ -173,7 +173,7 @@ schematica.config.accuratePlacementEnabled.tooltip=允许 Schematica Plus 客户
 schematica.config.pasteWithoutUpdates=粘贴时不发出方块更新
 schematica.message.edit.command_too_long=此编辑中的方块名称过长，无法放入聊天命令（256 个字符）。
 schematica.message.edit.updates_on_server=服务端命令无法跳过方块更新，因此粘贴改用安全顺序：先放完整方块，再放附着方块，最后放下落方块和流体。（在 Carpet 服务端上，/carpet fillUpdates false 可关闭更新。）
-schematica.message.edit.commands_data_dropped=有 %s 个方块或实体的数据过多，无法放入聊天命令（256 个字符）：这些方块已放置但不含内容，这些实体已跳过。
+schematica.message.edit.commands_data_dropped=有 %s 项方块或实体数据无法放入聊天命令（256 个字符），已被省略（矿车只保留能放下的物品堆）。安装服务端模组可完整粘贴。
 schematica.config.pasteWithoutUpdates.tooltip=粘贴时跳过方块放置/移除回调和相邻更新。在单人游戏或服务端安装 Schematica Plus 时完全有效；在其他服务端上命令无法跳过更新，因此粘贴改用安全的方块顺序。
 
 # commands - save

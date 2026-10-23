@@ -315,14 +315,19 @@ public final class CommandEditQueue {
                 break;
             }
             int[] chunk = chunks.get(best);
-            outbox.addAll(CommandPlanner.plan(job, view, chunk[0], chunk[1], nextPhase[best]++, ConfigurationHandler.commandFillMaxVolume));
+            for (CommandPlanner.Command command : CommandPlanner.plan(job, view, chunk[0], chunk[1], nextPhase[best]++, ConfigurationHandler.commandFillMaxVolume)) {
+                (command.late ? summons : outbox).add(command);
+            }
             phasesDone++;
             waitingNoted = false;
         }
         return outbox.poll();
     }
 
-    /** Entities go in once all blocks are placed, so nothing they stand on or hang from is missing. */
+    /**
+     * Entities go in once all blocks are placed, so nothing they stand on or hang from is missing; so do container
+     * contents filled slot by slot, so a sorter's hoppers are locked before their items arrive.
+     */
     private void releaseSummons(CommandPlanner.View view) {
         for (Iterator<CommandPlanner.Command> it = summons.iterator(); it.hasNext(); ) {
             CommandPlanner.Command summon = it.next();

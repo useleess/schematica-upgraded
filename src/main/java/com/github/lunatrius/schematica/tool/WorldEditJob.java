@@ -58,7 +58,8 @@ public final class WorldEditJob extends WorldEditTask {
     private boolean entitiesRemoved;
     private final IBlockState replacement, target;
     /** commandNameSetblock, commandNameFill */
-    public static volatile String setblockCommand = "setblock", fillCommand = "fill", summonCommand = "summon";
+    public static volatile String setblockCommand = "setblock", fillCommand = "fill", summonCommand = "summon",
+        replaceitemCommand = "replaceitem";
     /** Block.getStateId of every cell: the stored (metadata) form of the state, as the world keeps it. */
     private int[] states;
     private final Map<Integer, NBTTagCompound> tiles = new HashMap<>();
@@ -395,8 +396,66 @@ public final class WorldEditJob extends WorldEditTask {
     public String blockCommand(int x, int y, int z, IBlockState state, NBTTagCompound tile) {
         NBTTagCompound data = tile.copy();
         data.removeTag("x"); data.removeTag("y"); data.removeTag("z"); data.removeTag("id");
-        String command = blockCommand(x, y, z, state) + " " + data;
+        String command = blockCommand(x, y, z, state) + " " + compact(data);
         return command.length() <= MAX_COMMAND ? command : null;
+    }
+
+    /**
+     * For a container too full for one setblock: the setblock with its data but an empty inventory (which also clears
+     * what the world block held), or null when even that does not fit. {@link #itemCommands} fills it afterwards.
+     */
+    public String emptiedBlockCommand(int x, int y, int z, IBlockState state, NBTTagCompound tile) {
+        NBTTagCompound data = tile.copy();
+        data.setTag("Items", new NBTTagList());
+        return blockCommand(x, y, z, state, data);
+    }
+
+    /** One replaceitem per stack of a container's Items list; null entries are stacks too big for chat. */
+    public List<String> itemCommands(int x, int y, int z, NBTTagCompound tile) {
+        List<String> commands = new ArrayList<>();
+        NBTTagList items = tile.getTagList("Items", 10);
+        for (int i = 0; i < items.tagCount(); i++) {
+            NBTTagCompound item = items.getCompoundTagAt(i);
+            NBTTagCompound tag = item.getCompoundTag("tag");
+            String command = "/" + replaceitemCommand + " block " + x + " " + y + " " + z + " slot.container." + (item.getByte("Slot") & 255)
+                + " " + itemId(item.getString("id")) + " " + item.getByte("Count") + " " + item.getShort("Damage")
+                + (tag.hasNoTags() ? "" : " " + tag);
+            commands.add(command.length() <= MAX_COMMAND ? command : null);
+        }
+        return commands;
+    }
+
+    /** NBT text as vanilla writes it, except Items lists: short ids, untyped numbers, default damage left out. */
+    static String compact(NBTTagCompound data) {
+        StringBuilder text = new StringBuilder("{");
+        for (String key : data.getKeySet()) {
+            if (text.length() > 1) text.append(',');
+            text.append(key.matches("[A-Za-z0-9._+-]+") ? key : NBTTagString.quoteAndEscape(key)).append(':');
+            if (key.equals("Items") && data.hasKey(key, 9) && data.getTagList(key, 10).tagCount() == ((NBTTagList) data.getTag(key)).tagCount()) {
+                NBTTagList items = data.getTagList(key, 10);
+                text.append('[');
+                for (int i = 0; i < items.tagCount(); i++) text.append(i > 0 ? "," : "").append(compactItem(items.getCompoundTagAt(i)));
+                text.append(']');
+            } else text.append(data.getTag(key));
+        }
+        return text.append('}').toString();
+    }
+
+    private static String compactItem(NBTTagCompound item) {
+        StringBuilder text = new StringBuilder("{Slot:").append(item.getByte("Slot")).append(",id:").append(itemId(item.getString("id")))
+            .append(",Count:").append(item.getByte("Count"));
+        if (item.getShort("Damage") != 0) text.append(",Damage:").append(item.getShort("Damage"));
+        for (String key : item.getKeySet()) {
+            if (key.equals("Slot") || key.equals("id") || key.equals("Count") || key.equals("Damage")) continue;
+            text.append(',').append(key.matches("[A-Za-z0-9._+-]+") ? key : NBTTagString.quoteAndEscape(key)).append(':').append(item.getTag(key));
+        }
+        return text.append('}').toString();
+    }
+
+    /** Vanilla ids without their namespace; anything the NBT parser could read as another type stays quoted. */
+    private static String itemId(String id) {
+        String shortId = id.startsWith("minecraft:") ? id.substring(10) : id;
+        return shortId.matches("[a-z_][a-z0-9_]*") && !shortId.equals("true") && !shortId.equals("false") ? shortId : NBTTagString.quoteAndEscape(id);
     }
 
     /** Keys a summoned entity does not need: the command sets position and identity, the rest are defaults. */
@@ -406,6 +465,28 @@ public final class WorldEditJob extends WorldEditTask {
 
     /** A summon for a captured entity at its world position, or null when it would not fit in chat. */
     public String summonCommand(NBTTagCompound entity) {
+        return summonCommand(entity, false);
+    }
+
+    /**
+     * With trim, a container entity (chest or hopper minecart) whose items do not all fit keeps the first stacks that
+     * do: vanilla 1.12 cannot add items to an entity afterwards (replaceitem refuses minecarts, entitydata replaces lists).
+     */
+    public String summonCommand(NBTTagCompound entity, boolean trim) {
+        String command = summonText(entity);
+        NBTTagList items = entity.getTagList("Items", 10);
+        if (command != null || !trim || items.hasNoTags()) return command;
+        NBTTagCompound trimmed = entity.copy();
+        NBTTagList kept = items.copy();
+        while (command == null && !kept.hasNoTags()) {
+            kept.removeTag(kept.tagCount() - 1);
+            trimmed.setTag("Items", kept);
+            command = summonText(trimmed);
+        }
+        return command;
+    }
+
+    private String summonText(NBTTagCompound entity) {
         String id = entity.getString("id");
         NBTTagList pos = entity.getTagList("Pos", 6);
         if (id.isEmpty() || pos.tagCount() != 3) return null;
@@ -417,9 +498,12 @@ public final class WorldEditJob extends WorldEditTask {
             data.setInteger("TileZ", data.getInteger("TileZ") + z);
         }
         NBTTagList rotation = entity.getTagList("Rotation", 5);
-        if (rotation.tagCount() == 2) data.setTag("Rotation", rotation);
+        if (rotation.tagCount() == 2 && (rotation.getFloatAt(0) != 0 || rotation.getFloatAt(1) != 0)) data.setTag("Rotation", rotation);
+        // Hopper minecart defaults, left out so a full cart's items fit
+        if (data.getInteger("TransferCooldown") == 0) data.removeTag("TransferCooldown");
+        if (data.hasKey("Enabled", 1) && data.getBoolean("Enabled")) data.removeTag("Enabled");
         String command = "/" + summonCommand + " " + id + " " + coordinate(pos.getDoubleAt(0) + x) + " "
-            + coordinate(pos.getDoubleAt(1) + y) + " " + coordinate(pos.getDoubleAt(2) + z) + (data.hasNoTags() ? "" : " " + data);
+            + coordinate(pos.getDoubleAt(1) + y) + " " + coordinate(pos.getDoubleAt(2) + z) + (data.hasNoTags() ? "" : " " + compact(data));
         return command.length() <= MAX_COMMAND ? command : null;
     }
 

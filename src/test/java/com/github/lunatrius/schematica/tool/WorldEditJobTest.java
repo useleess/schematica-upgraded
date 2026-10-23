@@ -115,6 +115,79 @@ public class WorldEditJobTest {
         assertEquals("/kill @e[x=1,y=2,z=3,dx=3,dy=0,dz=1,type=!player]", WorldEditJob.killCommand(1, 2, 3, 4, 2, 4));
     }
 
+    /** Issue #3: full hoppers and minecarts lost their items because their data did not fit in one chat command. */
+    @Test public void containerItemsAreWrittenCompactlyAndStillReadBackAsTheSameStacks() throws Exception {
+        WorldEditJob job = new WorldEditJob(UUID.randomUUID(), 0, WorldEditJob.Kind.PASTE, -29999000, 200, -29999000, 1, 1, 1, null, null);
+        net.minecraft.nbt.NBTTagCompound hopper = inventory("Hopper", 5);
+        hopper.setInteger("TransferCooldown", 0);
+        String command = job.blockCommand(-29999000, 200, -29999000, net.minecraft.init.Blocks.HOPPER.getDefaultState(), hopper);
+        org.junit.Assert.assertNotNull("a full hopper fits in one command", command);
+        assertTrue(command, command.contains("{Slot:0,id:redstone,Count:64}"));
+        net.minecraft.nbt.NBTTagCompound parsed = net.minecraft.nbt.JsonToNBT.getTagFromJson(command.substring(command.indexOf('{')));
+        assertSameStacks(hopper, parsed, 5);
+        assertEquals(0, parsed.getInteger("TransferCooldown"));
+    }
+
+    @Test public void tooFullContainersArePlacedEmptyThenFilledOneStackPerCommand() throws Exception {
+        WorldEditJob job = new WorldEditJob(UUID.randomUUID(), 0, WorldEditJob.Kind.PASTE, 0, 64, 0, 1, 1, 1, null, null);
+        net.minecraft.nbt.NBTTagCompound chest = inventory("Chest", 27);
+        net.minecraft.block.state.IBlockState state = net.minecraft.init.Blocks.CHEST.getDefaultState();
+        org.junit.Assert.assertNull(job.blockCommand(5, 64, 7, state, chest));
+        assertEquals("/setblock 5 64 7 minecraft:chest 2 replace {Items:[]}", job.emptiedBlockCommand(5, 64, 7, state, chest));
+        java.util.List<String> fills = job.itemCommands(5, 64, 7, chest);
+        assertEquals(27, fills.size());
+        assertEquals("/replaceitem block 5 64 7 slot.container.0 redstone 64 0", fills.get(0));
+        assertEquals("/replaceitem block 5 64 7 slot.container.26 wool 26 14 {display:{Name:\"Filter 26\"}}", fills.get(26));
+    }
+
+    @Test public void minecartsKeepAsManyStacksAsFitAndFullHopperCartsKeepAll() throws Exception {
+        WorldEditJob job = new WorldEditJob(UUID.randomUUID(), 0, WorldEditJob.Kind.PASTE, -29999000, 200, -29999000, 1, 1, 1, null, null);
+        net.minecraft.nbt.NBTTagCompound cart = inventory("minecraft:hopper_minecart", 5);
+        net.minecraft.nbt.NBTTagList pos = new net.minecraft.nbt.NBTTagList();
+        for (double value : new double[] {0.5, 0.0625, 0.5}) pos.appendTag(new net.minecraft.nbt.NBTTagDouble(value));
+        cart.setTag("Pos", pos);
+        cart.setInteger("TransferCooldown", 0); cart.setBoolean("Enabled", true);
+        net.minecraft.nbt.NBTTagList rotation = new net.minecraft.nbt.NBTTagList();
+        rotation.appendTag(new net.minecraft.nbt.NBTTagFloat(0)); rotation.appendTag(new net.minecraft.nbt.NBTTagFloat(0));
+        cart.setTag("Rotation", rotation);
+        String summon = job.summonCommand(cart);
+        org.junit.Assert.assertNotNull(summon);
+        assertSameStacks(cart, net.minecraft.nbt.JsonToNBT.getTagFromJson(summon.substring(summon.indexOf('{'))), 5);
+        net.minecraft.nbt.NBTTagCompound chestCart = inventory("minecraft:chest_minecart", 27);
+        chestCart.setTag("Pos", pos);
+        org.junit.Assert.assertNull(job.summonCommand(chestCart));
+        String trimmed = job.summonCommand(chestCart, true);
+        assertTrue(trimmed, trimmed.length() <= 256 && trimmed.contains("{Slot:0,id:redstone,Count:64}"));
+    }
+
+    /** A container tag with stacks in slots 0..n-1: plain ones first, later ones with damage and a name, like sorter filters. */
+    private static net.minecraft.nbt.NBTTagCompound inventory(String id, int stacks) {
+        net.minecraft.nbt.NBTTagCompound tag = new net.minecraft.nbt.NBTTagCompound();
+        tag.setString("id", id);
+        net.minecraft.nbt.NBTTagList items = new net.minecraft.nbt.NBTTagList();
+        for (int i = 0; i < stacks; i++) {
+            net.minecraft.item.ItemStack stack = i < 5 ? new net.minecraft.item.ItemStack(net.minecraft.init.Items.REDSTONE, i == 0 ? 64 : i)
+                : new net.minecraft.item.ItemStack(net.minecraft.init.Blocks.WOOL, i, 14);
+            if (i >= 5) stack.setStackDisplayName("Filter " + i);
+            net.minecraft.nbt.NBTTagCompound item = stack.writeToNBT(new net.minecraft.nbt.NBTTagCompound());
+            item.setByte("Slot", (byte) i);
+            items.appendTag(item);
+        }
+        tag.setTag("Items", items);
+        return tag;
+    }
+
+    private static void assertSameStacks(net.minecraft.nbt.NBTTagCompound expected, net.minecraft.nbt.NBTTagCompound actual, int size) {
+        net.minecraft.util.NonNullList<net.minecraft.item.ItemStack> want = net.minecraft.util.NonNullList.withSize(size, net.minecraft.item.ItemStack.EMPTY);
+        net.minecraft.util.NonNullList<net.minecraft.item.ItemStack> got = net.minecraft.util.NonNullList.withSize(size, net.minecraft.item.ItemStack.EMPTY);
+        net.minecraft.inventory.ItemStackHelper.loadAllItems(expected, want);
+        net.minecraft.inventory.ItemStackHelper.loadAllItems(actual, got);
+        for (int i = 0; i < size; i++) {
+            assertFalse("slot " + i, got.get(i).isEmpty());
+            assertTrue("slot " + i + ": " + got.get(i), net.minecraft.item.ItemStack.areItemStacksEqual(want.get(i), got.get(i)));
+        }
+    }
+
     private static WorldEditJob nbtJob(boolean silent, boolean tiles, boolean entities) throws Exception {
         WorldEditJob job = job(WorldEditJob.Kind.PASTE, silent, false);
         job.capture(new com.github.lunatrius.schematica.world.storage.Schematic(null, 1, 1, 1), false, false);

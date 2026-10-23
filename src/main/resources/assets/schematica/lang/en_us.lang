@@ -173,7 +173,7 @@ schematica.config.accuratePlacementEnabled.tooltip=Let Easy Place and the printe
 schematica.config.pasteWithoutUpdates=pasteWithoutUpdates
 schematica.message.edit.command_too_long=A block name in this edit is too long for a chat command (256 characters).
 schematica.message.edit.updates_on_server=Server commands cannot skip block updates, so the paste uses a safe order instead: full blocks first, then attached blocks, falling blocks and fluids last. (On a Carpet server, /carpet fillUpdates false turns updates off.)
-schematica.message.edit.commands_data_dropped=%s blocks or entities had too much data for a chat command (256 characters): those blocks were placed without their contents and those entities were skipped.
+schematica.message.edit.commands_data_dropped=%s pieces of block or entity data did not fit in a chat command (256 characters) and were left out (a minecart keeps only the stacks that fit). With the server mod everything is pasted.
 schematica.config.pasteWithoutUpdates.tooltip=Skip placement/removal block callbacks and neighbor notifications when pasting. Fully works in singleplayer or with Schematica Plus on the server; on other servers commands cannot skip updates, so the paste uses a safe block order instead.
 
 # commands - save
