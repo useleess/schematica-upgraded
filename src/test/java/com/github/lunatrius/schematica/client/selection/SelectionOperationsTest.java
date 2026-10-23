@@ -49,7 +49,7 @@ public class SelectionOperationsTest {
         assertEquals(new Vector3i(), simple.first());
     }
 
-    @Test public void expandIncludesClickedPointNormalizesReversedCornersAndRightClickResets() {
+    @Test public void expandIncludesClickedPointNormalizesReversedCornersThenRightClickResets() {
         AreaSelectionLibrary library = AreaSelectionLibrary.fromJson(null);
         Area area = library.selected();
         library.setPoints(area, new Vector3i(10, 70, 20), new Vector3i(0, 60, -5));
