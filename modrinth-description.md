@@ -45,3 +45,5 @@ All hotkeys can be rebound in the config screen. If you also run Litematica (Lit
 - **Lunatrius** - original Schematica and LunatriusCore (MIT).
 - **HackerRouter** - Schematica Plus for 1.7.10, which this is ported from.
 - **masa, Sakura-Ryoko and contributors** - Litematica and MaLiLib, whose UI, textures and translations are included (LGPL-3.0).
+
+**See what's being worked on next:** [Useless Mods Workshop](https://useleess.github.io/workshop)
